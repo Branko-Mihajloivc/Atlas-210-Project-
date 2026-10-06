@@ -101,7 +101,10 @@ dial 14.099.0 (1 kHz tone), antenna off, and add a dead zone of ~5 mV above rest
   carrier null check), peak L103 (5520 kHz).
 
 ## 3D front plate (2026-10-06)
-- Original: Desktop\Atlas 210.stl. Corrected: Desktop\Atlas 210 - fixed.stl (outer size unchanged 239x88x9).
+- Original: 3d/Atlas 210 - original.stl. Corrected and re-exported from CAD: 3d/Atlas 210 - final.stl
+  (outer size unchanged 239x88x9).
+- Project home (since 2026-10-06): Desktop\Atlas 210 Project = git repo
+  https://github.com/Branko-Mihajloivc/Atlas-210-Project- (the E: folder is the old 2023 archive).
 - MBL600 encoder (datasheet: flange D61, body D43, cutout D44, 3x M3 studs PCD 50.8 at 120 deg):
   recess D61.8 x 1, through hole D44.4, 3x D3.8 at (0,+25.4) (-22,-12.7) (+22,-12.7) from centre.
 - 2x 0.96" SSD1306 (PCB 27.3 x 27.8, glass 26.8 x 19.3, pixels 22 x 11 starting 6.37 below PCB top):

@@ -63,7 +63,8 @@ See [`docs/status.md`](docs/status.md) for all measurements. Highlights:
 
 ## Front plate (3D print)
 
-[`3d/Atlas 210 - fixed.stl`](3d) — 239 × 88 × 9 mm. Corrected from the original design:
+[`3d/Atlas 210 - final.stl`](3d) — 239 × 88 × 9 mm, ready to print (`Atlas 210 - original.stl` is the
+first design for comparison). Corrected from the original design:
 
 - **MBL600** 60 mm encoder: recess Ø61.8, through hole Ø44.4, 3 × Ø3.8 at 120° on PCD 50.8.
 - **2 × 0.96" SSD1306 OLED**: window 23 × 12, pocket 27.8 × 28.4.
