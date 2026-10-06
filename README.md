@@ -19,7 +19,7 @@ holds both displays, a CNC-style tuning knob (MBL600) and extra buttons.
 | [`3d`](3d) | Front plate STL (original and corrected) + Python scripts used to measure and fix it |
 | [`docs`](docs) | Project status / measurements, A4 wiring sheet (PDF + HTML) |
 | [`tools`](tools) | PowerShell helpers: upload over a CH340 port when avrdude fails, serial reader, bootloader check, flash backup; 2023 firmware backup |
-| [`photos`](photos) | Build photos (resized, metadata removed) |
+| [`photos`](photos) | Build photos |
 
 ## VFO Nano (`atlas_vfo_fixed.ino`)
 
