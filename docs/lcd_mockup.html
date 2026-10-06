@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atlas 210X LCD mockup</title>
+<style>
+  :root { --bg: #f4f4f1; --card: #ffffff; --ink: #1d1d1b; --mute: #5f5e5a; --line: #d3d1c7; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #1b1b1a; --card: #262624; --ink: #ecebe6; --mute: #a9a79f; --line: #444441; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.6 "Segoe UI", Arial, sans-serif; }
+  main { max-width: 720px; margin: 0 auto; padding: 24px 16px 40px; }
+  h1 { font-size: 22px; font-weight: 500; margin: 0 0 4px; }
+  p { margin: 0 0 12px; color: var(--mute); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
+  .bezel { background: #2b3a12; padding: 14px; border-radius: 6px; }
+  canvas { display: block; width: 100%; height: auto; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 12px; }
+  button { font: inherit; font-size: 14px; color: var(--ink); background: transparent; border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+  button:hover { background: var(--bg); }
+  .slider { display: flex; align-items: center; gap: 12px; margin-top: 16px; }
+  .slider input { flex: 1; }
+  .label { font-size: 13px; color: var(--mute); text-align: center; margin: 18px 0 6px; }
+  ul { color: var(--mute); padding-left: 20px; font-size: 14px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Atlas 210X VFO LCD mockup</h1>
+  <p>RG1602A 16×2 drawn dot by dot (5×8 per character). Proposed layout. Real LCD contrast and glyphs may differ, so test on the real display first.</p>
+  <div class="card">
+    <div class="bezel"><canvas id="lcd" width="612" height="128"></canvas></div>
+    <div class="slider">
+      <label for="sig">Signal</label>
+      <input type="range" id="sig" min="0" max="23" step="1" value="13">
+      <span id="sigOut" style="min-width:70px;font-weight:500">S6</span>
+    </div>
+    <div class="row">
+      <button id="bMode"></button>
+      <button id="bFe"></button>
+      <button id="bAgc"></button>
+      <button id="bTx"></button>
+      <button id="bScale"></button>
+    </div>
+    <div class="label">The 8 custom character slots right now</div>
+    <canvas id="slots" width="640" height="110"></canvas>
+  </div>
+  <ul>
+    <li>Row 1: mode (USB / LSB / TX), frequency, <code>!</code> after an I²C fault, AGC F / S.</li>
+    <li>Row 2: PRE / ATT / blank, 9 S-meter fields (S1…S9), then +10…+40.</li>
+    <li>Odd fields show a small 3×6 digit; when the signal reaches the field it turns into the same digit cut out of a lit block. Even fields are bars with 3 dB half steps.</li>
+    <li>Small digits on both lit and unlit fields: each digit appears only once on screen, so its slot is rewritten when the field changes state. 5 digit slots + bar + half bar = 7 of 8.</li>
+  </ul>
+</main>
+<script>
+const F={'0':['01110','10001','10011','10101','11001','10001','01110'],'1':['00100','01100','00100','00100','00100','00100','01110'],'2':['01110','10001','00001','00010','00100','01000','11111'],'3':['11111','00010','00100','00010','00001','10001','01110'],'4':['00010','00110','01010','10010','11111','00010','00010'],'5':['11111','10000','11110','00001','00001','10001','01110'],'6':['00110','01000','10000','11110','10001','10001','01110'],'7':['11111','00001','00010','00100','01000','01000','01000'],'8':['01110','10001','10001','01110','10001','10001','01110'],'9':['01110','10001','10001','01111','00001','00010','01100'],'.':['00000','00000','00000','00000','00000','01100','01100'],'!':['00100','00100','00100','00100','00100','00000','00100'],'F':['11111','10000','10000','11110','10000','10000','10000'],'S':['01111','10000','10000','01110','00001','00001','11110'],'L':['10000','10000','10000','10000','10000','10000','11111'],'U':['10001','10001','10001','10001','10001','10001','01110'],'B':['11110','10001','10001','11110','10001','10001','11110'],'A':['01110','10001','10001','11111','10001','10001','10001'],'P':['11110','10001','10001','11110','10000','10000','10000'],'R':['11110','10001','10001','11110','10100','10010','10001'],'E':['11111','10000','10000','11110','10000','10000','11111'],'T':['11111','00100','00100','00100','00100','00100','00100'],'X':['10001','10001','01010','00100','01010','10001','10001'],'+':['00000','00100','00100','11111','00100','00100','00000'],' ':['00000','00000','00000','00000','00000','00000','00000']};
+const D={'1':['010','110','010','010','010','111'],'3':['111','001','011','001','001','111'],'5':['111','100','111','001','001','111'],'7':['111','001','001','010','010','010'],'9':['111','101','101','111','001','111']};
+const small=d=>['00000',...D[d].map(r=>'0'+r+'0'),'00000'];
+const inv=d=>['11111',...D[d].map(r=>'1'+r.split('').map(c=>c==='1'?'0':'1').join('')+'1'),'11111'];
+const bar=['01010','01010','01010','01010','01010','01010','01010','00000'];
+const half=['01000','01000','01000','01000','01000','01000','01000','00000'];
+const tick=['00000','00000','00000','00000','00000','00000','00100','00000'];
+const blank=['00000','00000','00000','00000','00000','00000','00000','00000'];
+const scales=['small digits','LCD digits','ticks','blank'];
+const st={mode:'USB',fe:'PRE',agc:'F',tx:false,fault:false,scale:0};
+const ON='#1c2608',OFF='#a9c93a',BG='#b9d64a';
+const $=id=>document.getElementById(id);
+function g(c){return typeof c==='string'?(F[c]||F[' ']).concat(['00000']):c;}
+function sig(){const v=+$('sig').value;return v<=18?{h:v,over:-1}:{h:18,over:(v-18)*10};}
+function build(){
+  const r1=[],r2=[],slots=[null,null,null,null,null,bar,half,null],s=st.tx?{h:0,over:-1}:sig();
+  for(const c of (st.tx?'TX ':st.mode))r1.push(c);
+  r1.push(' ');
+  for(const c of (st.mode==='USB'?'14.100.000':' 7.169.100'))r1.push(c);
+  r1.push(st.fault?'!':' ',st.agc);
+  for(const c of (st.fe==='OFF'?'   ':st.fe))r2.push(c);
+  r2.push(' ');
+  for(let i=0;i<9;i++){
+    const h=s.h-2*i,d=String(i+1);
+    if(i%2===0){
+      let gl;
+      if(h>=2)gl=inv(d);
+      else if(st.scale===0)gl=small(d);
+      else if(st.scale===1)gl=d;
+      else if(st.scale===2){gl=tick;slots[7]=tick;}
+      else gl=' ';
+      if(typeof gl!=='string')slots[i/2]=gl;
+      r2.push(gl);
+    }else{
+      if(h>=2)r2.push(bar);else if(h===1)r2.push(half);
+      else if(st.scale===2){r2.push(tick);slots[7]=tick;}else r2.push(' ');
+    }
+  }
+  for(const c of (s.over<0?'   ':s.over===0?'+  ':'+'+s.over))r2.push(c);
+  return {rows:[r1,r2],slots};
+}
+function cell(ctx,gl,ox,oy,p){for(let y=0;y<8;y++)for(let x=0;x<5;x++){ctx.fillStyle=gl[y]&&gl[y][x]==='1'?ON:OFF;ctx.fillRect(ox+x*p,oy+y*p,p-1,p-1);}}
+function draw(){
+  const b=build(),cv=$('lcd'),x=cv.getContext('2d'),p=6,cw=6*p+2,chh=9*p+2;
+  x.fillStyle=BG;x.fillRect(0,0,cv.width,cv.height);
+  b.rows.forEach((row,ri)=>row.forEach((c,ci)=>cell(x,g(c),6+ci*cw,6+ri*chh,p)));
+  const z=$('slots'),y=z.getContext('2d');y.clearRect(0,0,z.width,z.height);
+  const mute=getComputedStyle(document.body).getPropertyValue('--mute').trim();
+  b.slots.forEach((gl,i)=>{const ox=14+i*78;y.fillStyle=BG;y.fillRect(ox-3,5,46,70);cell(y,gl||blank,ox,8,8);y.fillStyle=mute;y.font='12px Segoe UI, Arial';y.fillText(gl?'slot '+(i+1):'slot '+(i+1)+' free',ox,96);});
+  const v=+$('sig').value,s=sig();
+  $('sigOut').textContent=v<=18?('S'+Math.floor(v/2)+(v%2?' +3 dB':'')):('S9+'+s.over);
+  $('bMode').textContent='Mode: '+st.mode;
+  $('bFe').textContent='Front end: '+st.fe;
+  $('bAgc').textContent='AGC: '+(st.agc==='F'?'fast':'slow');
+  $('bTx').textContent='TX: '+(st.tx?'on':'off');
+  $('bScale').textContent='Unlit scale: '+scales[st.scale];
+}
+$('sig').oninput=draw;
+$('bMode').onclick=()=>{st.mode=st.mode==='USB'?'LSB':'USB';draw();};
+$('bFe').onclick=()=>{st.fe={PRE:'OFF',OFF:'ATT',ATT:'PRE'}[st.fe];draw();};
+$('bAgc').onclick=()=>{st.agc=st.agc==='F'?'S':'F';draw();};
+$('bTx').onclick=()=>{st.tx=!st.tx;draw();};
+$('bScale').onclick=()=>{st.scale=(st.scale+1)%scales.length;draw();};
+draw();
+</script>
+</body>
+</html>
