@@ -9,6 +9,13 @@ holds both displays, a CNC-style tuning knob (MBL600) and extra buttons.
 
 ![Atlas 210X with the new VFO](photos/20221208_213150.jpg)
 
+## Background
+
+I bought this Atlas 210X in semi-working condition, hoping to restore it. A few new capacitors were
+enough to get it going: power output, receive and transmit all tested fine. But the radio drifted
+quite a bit, and that changed the plan. Instead of a plain restoration it became a full modification
+project: replace the VFO with an Si5351, then improve whatever else could be made better.
+
 ## Repository layout
 
 | Folder | Contents |
