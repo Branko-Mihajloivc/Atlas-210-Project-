@@ -37,7 +37,8 @@ Test gear: FTdx10 as frequency reference, tinySA + step attenuator as signal sou
   position. The Atlas AGC bulletin mod was not applied for that reason.
 - AGC release is slow (S-meter falls back over several seconds) — this is the PC-300D hold time,
   not the Nano.
-- The VariBeam DSP adds ~25 dB of audio; it belongs after the AGC pickoff (PC-300 pin 22 → AF gain).
+- The VariBeam DSP adds ~25 dB of audio; it is wired after the AGC pickoff: PC-300 pin 22 → VariBeam → AF gain → pin 12.
+- AF/RF gain and MIC/ALC are now two concentric dual pots (values to confirm, see the wiring sheet).
 - 20 m weaker: the chassis-mounted 20 m image filter had a loose paper coil form turning with the
   slug → glue the form, tune for minimum image. 4–6 dB less on 20 m is normal for the Atlas.
 - PC-100: loose R101 trimmer (carrier balance, 100 Ω) with hand effect → replace, check TX carrier

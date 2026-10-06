@@ -4,18 +4,18 @@
 <meta charset="utf-8">
 <title>Atlas 210X VFO wiring</title>
 <style>
-  @page { size: A4 portrait; margin: 9mm; }
+  @page { size: A4 portrait; margin: 7mm; }
   :root { --ink: #111; --mute: #555; --line: #999; --soft: #eee; }
   * { box-sizing: border-box; }
   body { margin: 0; background: #fff; color: var(--ink);
-         font: 9pt/1.3 "Segoe UI", Arial, sans-serif; }
+         font: 8.5pt/1.25 "Segoe UI", Arial, sans-serif; }
   .page { width: 192mm; margin: 0 auto; }
   h1 { font-size: 14pt; margin: 0 0 1mm; }
   .sub { color: var(--mute); margin-bottom: 3mm; font-size: 8.5pt; }
-  h2 { font-size: 10.5pt; margin: 2.5mm 0 1.2mm; padding-bottom: .6mm; border-bottom: 1.2px solid var(--ink); }
+  h2 { font-size: 10pt; margin: 2mm 0 1mm; padding-bottom: .6mm; border-bottom: 1.2px solid var(--ink); }
   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm 6mm; }
-  table { border-collapse: collapse; width: 100%; font-size: 8.5pt; }
-  th, td { border: .6px solid var(--line); padding: .6mm 1.4mm; text-align: left; vertical-align: top; }
+  table { border-collapse: collapse; width: 100%; font-size: 8pt; }
+  th, td { border: .6px solid var(--line); padding: .4mm 1.4mm; text-align: left; vertical-align: top; }
   th { background: var(--soft); }
   td.c, th.c { text-align: center; }
   ul { margin: .5mm 0 0 4mm; padding: 0; }
@@ -218,6 +218,43 @@
 
       <h2>6. MODE LSB/USB</h2>
       <div class="note">Software only: BFO moved to the other side of the crystal filter (5.520.000 &harr; ~5.523.3 MHz, to be set) &mdash; LO calculation follows automatically.</div>
+    </div>
+  </div>
+
+  <h2>7. Front panel gain controls &mdash; 2 concentric dual pots (2 shafts each) <span class="tag">values to confirm</span></h2>
+  <div class="grid">
+    <div>
+      <table>
+        <tr><th>Pot</th><th>Gang</th><th>Function</th><th>Value</th></tr>
+        <tr><td rowspan="2">1</td><td>a</td><td>AF gain</td><td>5 k</td></tr>
+        <tr><td>b</td><td>RF gain</td><td>10 k</td></tr>
+        <tr><td rowspan="2">2</td><td>a</td><td>MIC gain</td><td>10 k</td></tr>
+        <tr><td>b</td><td>ALC</td><td>20 k</td></tr>
+      </table>
+      <div class="note">Values as fitted; which shaft (inner/outer) drives which gang, and the original Atlas values, to be measured when the new front plate goes in. RF / MIC / ALC: existing wires moved lug for lug (CW end, wiper, CCW end).</div>
+    </div>
+    <div>
+      <svg viewBox="0 0 330 92" aria-label="AF chain with VariBeam">
+        <text x="2" y="20">PC-300</text><text x="2" y="30">pin 22</text>
+        <line class="w" x1="36" y1="24" x2="62" y2="24"/>
+        <rect class="w" x="62" y="12" width="70" height="24"/>
+        <text x="72" y="27">VariBeam DSP</text>
+        <line class="w" x1="132" y1="24" x2="190" y2="24"/>
+        <text x="140" y="18">audio out</text>
+        <!-- pot -->
+        <line class="w" x1="190" y1="24" x2="190" y2="30"/>
+        <polyline class="w" points="190,30 185,33 195,39 185,45 195,51 185,57 190,60 190,70"/>
+        <polygon class="f" points="198,45 206,41 206,49"/>
+        <line class="w" x1="206" y1="45" x2="250" y2="45"/>
+        <text x="256" y="42">PC-300</text><text x="256" y="52">pin 12</text>
+        <text x="160" y="50">AF</text><text x="160" y="60">5 k</text>
+        <line class="w" x1="180" y1="70" x2="200" y2="70"/><line class="w" x1="184" y1="74" x2="196" y2="74"/><line class="w" x1="188" y1="78" x2="192" y2="78"/>
+        <text x="204" y="77">GND</text>
+      </svg>
+      <ul>
+        <li>AGC / S-meter pickoff is before pin 22 &rarr; DSP and AF gain do not change the S-meter.</li>
+        <li>Shielded cable for the audio leads, shield grounded at one end.</li>
+      </ul>
     </div>
   </div>
 </div>
