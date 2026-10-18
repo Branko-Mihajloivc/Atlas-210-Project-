@@ -38,19 +38,20 @@
   <div class="grid">
     <!-- LCD -->
     <div>
-      <h2>1. LCD RG1602A (16&times;2) &mdash; 5 twisted pairs</h2>
+      <h2>1. LCD RG1602A (16&times;2) &mdash; 5 twisted pairs + V0</h2>
       <table>
-        <tr><th class="c">Pair</th><th>Wire A (Nano &rarr; 470 &Omega; &rarr; LCD pin)</th><th>Wire B (twisted with A)</th></tr>
-        <tr><td class="c">1</td><td>D8 &rarr; E &rarr; 6</td><td>GND &rarr; 1</td></tr>
-        <tr><td class="c">2</td><td>D7 &rarr; RS &rarr; 4</td><td>GND &rarr; 1</td></tr>
-        <tr><td class="c">3</td><td>D9 &rarr; D4 &rarr; 11</td><td>D10 &rarr; D5 &rarr; 12</td></tr>
-        <tr><td class="c">4</td><td>D11 &rarr; D6 &rarr; 13</td><td>D12 &rarr; D7 &rarr; 14</td></tr>
-        <tr><td class="c">5</td><td>+5 V &rarr; VDD 2 (no R)</td><td>GND &rarr; 1</td></tr>
+        <tr><th>Pair (colours)</th><th>Wire 1: Nano &rarr; LCD pin</th><th>Wire 2</th></tr>
+        <tr><td>orange / black</td><td>orange: D8 &rarr; 470 &Omega; &rarr; E 6</td><td>black: GND &rarr; 1</td></tr>
+        <tr><td>blue / black</td><td>blue: D7 &rarr; 470 &Omega; &rarr; RS 4</td><td>black: GND &rarr; 1</td></tr>
+        <tr><td>red / black</td><td>red: +5 V &rarr; VDD 2</td><td>black: GND &rarr; 1</td></tr>
+        <tr><td>brown / white</td><td>brown: D9 &rarr; 470 &Omega; &rarr; D4 11</td><td>white: D10 &rarr; 470 &Omega; &rarr; D5 12</td></tr>
+        <tr><td>purple / green</td><td>purple: D11 &rarr; 470 &Omega; &rarr; D6 13</td><td>green: D12 &rarr; 470 &Omega; &rarr; D7 14</td></tr>
+        <tr><td>single</td><td colspan="2">contrast pot wiper (pot on the Nano board, ends +5 V / GND) &rarr; V0 3</td></tr>
       </table>
       <ul>
-        <li><b>At the LCD (not in the cable):</b> R/W 5 &rarr; 1; backlight 15 &rarr; 2, 16 &rarr; 1 (100 &Omega; on board); 10k contrast pot 1&ndash;3&ndash;2 (wiper to V0 pin 3); 100 nF + 10 &micro;F across 2&ndash;1. D0&ndash;D3 (7&ndash;10) open.</li>
-        <li>470 &Omega; series R at the <b>Nano end</b> (220 &Omega;&ndash;1 k OK). All 3 GND wires to the Nano GND pin next to D2; LCD not grounded to the chassis.</li>
-        <li>~1 twist / 1&ndash;2 cm, slightly different rate per pair, &lt; 1 cm untwisted at the ends. Route along the chassis, cross other wiring at 90&deg;, clip-on ferrite near the Nano.</li>
+        <li><b>Nano board:</b> 3 black GND wires to one GND point (where the old ground wire was). 470 &Omega; in line within ~2 cm of the pads, heat shrink.</li>
+        <li><b>At the LCD:</b> 3 black wires to pin 1; jumpers R/W 5 &rarr; 1, K 16 &rarr; 1, A 15 &rarr; 2 (100 &Omega; on board); 100 nF + 10 &micro;F across 2&ndash;1, optional 100 nF 3&ndash;1. Pins 7&ndash;10 open.</li>
+        <li>Twist 0.7&ndash;2 cm, different per pair, &lt; 1 cm untwisted at the ends. Pairs side by side, along the chassis, ferrite near the Nano.</li>
       </ul>
     </div>
 
