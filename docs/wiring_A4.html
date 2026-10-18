@@ -38,26 +38,19 @@
   <div class="grid">
     <!-- LCD -->
     <div>
-      <h2>1. LCD RG1602A (16&times;2) &mdash; series resistors + supply</h2>
+      <h2>1. LCD RG1602A (16&times;2) &mdash; 5 twisted pairs</h2>
       <table>
-        <tr><th>Nano</th><th>Series R<br>(at Nano end)</th><th>Signal</th><th class="c">LCD pin</th></tr>
-        <tr><td>D7</td><td>470 &Omega;</td><td>RS</td><td class="c">4</td></tr>
-        <tr><td>D8</td><td>470 &Omega;</td><td>E</td><td class="c">6</td></tr>
-        <tr><td>D9</td><td>470 &Omega;</td><td>D4</td><td class="c">11</td></tr>
-        <tr><td>D10</td><td>470 &Omega;</td><td>D5</td><td class="c">12</td></tr>
-        <tr><td>D11</td><td>470 &Omega;</td><td>D6</td><td class="c">13</td></tr>
-        <tr><td>D12</td><td>470 &Omega;</td><td>D7</td><td class="c">14</td></tr>
-        <tr><td>GND</td><td>&mdash;</td><td>VSS, R/W</td><td class="c">1, 5</td></tr>
-        <tr><td>+5 V</td><td>&mdash;</td><td>VDD</td><td class="c">2</td></tr>
-        <tr><td>10k pot</td><td>wiper</td><td>V0 contrast</td><td class="c">3</td></tr>
-        <tr><td>+5 V</td><td>(100 &Omega; on board)</td><td>Backlight A</td><td class="c">15</td></tr>
-        <tr><td>GND</td><td>(0 &Omega; on board)</td><td>Backlight K</td><td class="c">16</td></tr>
+        <tr><th class="c">Pair</th><th>Wire A (Nano &rarr; 470 &Omega; &rarr; LCD pin)</th><th>Wire B (twisted with A)</th></tr>
+        <tr><td class="c">1</td><td>D8 &rarr; E &rarr; 6</td><td>GND &rarr; 1</td></tr>
+        <tr><td class="c">2</td><td>D7 &rarr; RS &rarr; 4</td><td>GND &rarr; 1</td></tr>
+        <tr><td class="c">3</td><td>D9 &rarr; D4 &rarr; 11</td><td>D10 &rarr; D5 &rarr; 12</td></tr>
+        <tr><td class="c">4</td><td>D11 &rarr; D6 &rarr; 13</td><td>D12 &rarr; D7 &rarr; 14</td></tr>
+        <tr><td class="c">5</td><td>+5 V &rarr; VDD 2 (no R)</td><td>GND &rarr; 1</td></tr>
       </table>
       <ul>
-        <li>Pins 7&ndash;10 (D0&ndash;D3) not connected.</li>
-        <li><b>At the LCD:</b> 100 nF ceramic + 10 &micro;F between pin 2 (VDD) and pin 1 (VSS).</li>
-        <li>Series R 220 &Omega;&ndash;1 k all OK (slows edges = less hash). Short cable along chassis, clip-on ferrite near the Nano.</li>
-        <li>After fitting: adjust contrast pot (V0).</li>
+        <li><b>At the LCD (not in the cable):</b> R/W 5 &rarr; 1; backlight 15 &rarr; 2, 16 &rarr; 1 (100 &Omega; on board); 10k contrast pot 1&ndash;3&ndash;2 (wiper to V0 pin 3); 100 nF + 10 &micro;F across 2&ndash;1. D0&ndash;D3 (7&ndash;10) open.</li>
+        <li>470 &Omega; series R at the <b>Nano end</b> (220 &Omega;&ndash;1 k OK). All 3 GND wires to the Nano GND pin next to D2; LCD not grounded to the chassis.</li>
+        <li>~1 twist / 1&ndash;2 cm, slightly different rate per pair, &lt; 1 cm untwisted at the ends. Route along the chassis, cross other wiring at 90&deg;, clip-on ferrite near the Nano.</li>
       </ul>
     </div>
 
