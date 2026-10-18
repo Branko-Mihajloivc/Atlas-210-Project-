@@ -40,19 +40,19 @@
     <div>
       <h2>1. LCD RG1602A (16&times;2) &mdash; twisted wiring, 12 wires</h2>
       <table>
-        <tr><th>Twisted group</th><th>Nano board pad</th><th class="c">LCD pin</th></tr>
-        <tr><td rowspan="2">orange / black</td><td>orange: D8 &rarr; 470 &Omega;</td><td class="c">6 E</td></tr>
-        <tr><td>black: GND</td><td class="c">1</td></tr>
-        <tr><td rowspan="2">blue / black</td><td>blue: D7 &rarr; 470 &Omega;</td><td class="c">4 RS</td></tr>
-        <tr><td>black: GND</td><td class="c">1</td></tr>
-        <tr><td rowspan="4">red / black / yellow / grey</td><td>red: +5 V</td><td class="c">2 VDD</td></tr>
-        <tr><td>black: GND</td><td class="c">1</td></tr>
-        <tr><td>yellow: contrast pot wiper</td><td class="c">3 V0</td></tr>
-        <tr><td>grey: 10 &Omega; pad (backlight)</td><td class="c">15 A</td></tr>
-        <tr><td rowspan="2">brown / white</td><td>brown: D9 &rarr; 470 &Omega;</td><td class="c">11 D4</td></tr>
-        <tr><td>white: D10 &rarr; 470 &Omega;</td><td class="c">12 D5</td></tr>
-        <tr><td rowspan="2">purple / green</td><td>green: D11 &rarr; 470 &Omega;</td><td class="c">13 D6</td></tr>
-        <tr><td>purple: D12 &rarr; 470 &Omega;</td><td class="c">14 D7</td></tr>
+        <tr><th>Twisted group</th><th>Nano board pad</th><th class="c">LCD pin</th><th>Old wire <span class="tag">temp</span></th></tr>
+        <tr><td rowspan="2">orange / black</td><td>orange: D8 &rarr; 470 &Omega;</td><td class="c">6 E</td><td>grey</td></tr>
+        <tr><td>black: GND</td><td class="c">1</td><td>black</td></tr>
+        <tr><td rowspan="2">blue / black</td><td>blue: D7 &rarr; 470 &Omega;</td><td class="c">4 RS</td><td>green</td></tr>
+        <tr><td>black: GND</td><td class="c">1</td><td>black</td></tr>
+        <tr><td rowspan="4">red / black / yellow / grey</td><td>red: +5 V</td><td class="c">2 VDD</td><td>red</td></tr>
+        <tr><td>black: GND</td><td class="c">1</td><td>black</td></tr>
+        <tr><td>yellow: contrast pot wiper</td><td class="c">3 V0</td><td>blue</td></tr>
+        <tr><td>grey: 10 &Omega; pad (backlight)</td><td class="c">15 A</td><td>yellow</td></tr>
+        <tr><td rowspan="2">brown / white</td><td>brown: D9 &rarr; 470 &Omega;</td><td class="c">11 D4</td><td>white</td></tr>
+        <tr><td>white: D10 &rarr; 470 &Omega;</td><td class="c">12 D5</td><td>brown</td></tr>
+        <tr><td rowspan="2">purple / green</td><td>green: D11 &rarr; 470 &Omega;</td><td class="c">13 D6</td><td>purple</td></tr>
+        <tr><td>purple: D12 &rarr; 470 &Omega;</td><td class="c">14 D7</td><td>orange</td></tr>
       </table>
       <ul>
         <li><b>Nano board:</b> pads unchanged; all 3 black wires on the one GND pad. 470 &Omega; in line within ~2 cm of the pads (6 signal wires only).</li>
