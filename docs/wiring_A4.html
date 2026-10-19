@@ -4,15 +4,15 @@
 <meta charset="utf-8">
 <title>Atlas 210X VFO wiring</title>
 <style>
-  @page { size: A4 portrait; margin: 7mm; }
+  @page { size: A4 portrait; margin: 6mm; }
   :root { --ink: #111; --mute: #555; --line: #999; --soft: #eee; }
   * { box-sizing: border-box; }
   body { margin: 0; background: #fff; color: var(--ink);
-         font: 8.2pt/1.22 "Segoe UI", Arial, sans-serif; }
+         font: 8.2pt/1.17 "Segoe UI", Arial, sans-serif; }
   .page { width: 192mm; margin: 0 auto; }
   h1 { font-size: 14pt; margin: 0 0 1mm; }
   .sub { color: var(--mute); margin-bottom: 3mm; font-size: 8.5pt; }
-  h2 { font-size: 10pt; margin: 2mm 0 1mm; padding-bottom: .6mm; border-bottom: 1.2px solid var(--ink); }
+  h2 { font-size: 9.6pt; margin: 1.6mm 0 0.8mm; padding-bottom: .6mm; border-bottom: 1.2px solid var(--ink); }
   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm 6mm; }
   table { border-collapse: collapse; width: 100%; font-size: 7.8pt; }
   th, td { border: .6px solid var(--line); padding: .4mm 1.4mm; text-align: left; vertical-align: top; }
@@ -80,24 +80,25 @@
         <li>Never plug the Nano USB in while the TTL cable is connected.</li>
       </ul>
 
-      <h2>Free Nano pins &amp; plan</h2>
+      <h2>Free Nano pins &amp; plan <span class="tag">proposal</span></h2>
       <table>
         <tr><th>Pin</th><th>Now</th><th>Plan</th></tr>
         <tr><td>D0 / D1</td><td>Serial</td><td>TTL leads</td></tr>
-        <tr><td>D4</td><td>free</td><td>spare</td></tr>
-        <tr><td>D5</td><td>free</td><td>ATT relay driver</td></tr>
-        <tr><td>D13</td><td>free (LED)</td><td>AGC fast (2N7000)</td></tr>
-        <tr><td>A6</td><td>free (analog only)</td><td>button ladder</td></tr>
-        <tr><td>A7</td><td>free (analog only)</td><td>spare / 2nd ladder</td></tr>
+        <tr><td>D4</td><td>free</td><td>CW sense (+CW)</td></tr>
+        <tr><td>D5</td><td>free</td><td>ATT switch sense</td></tr>
+        <tr><td>D6</td><td>STEP button</td><td>PRE switch sense (STEP &rarr; A6)</td></tr>
+        <tr><td>D13</td><td>free (LED)</td><td>AGC fast switch sense</td></tr>
+        <tr><td>A6</td><td>free (analog only)</td><td>STEP / MODE / MENU ladder</td></tr>
+        <tr><td>A7</td><td>free (analog only)</td><td>spare</td></tr>
       </table>
-      <div class="note">Used: D2/D3 encoder, D6 enc. button, D7&ndash;D12 LCD, A0/A1 S-meter, A2 TX, A3 band, A4/A5 I&sup2;C Si5351.</div>
+      <div class="note">Used: D2/D3 encoder, D7&ndash;D12 LCD, A0/A1 S-meter, A2 TX, A3 band, A4/A5 I&sup2;C Si5351.<br><b>Sense inputs:</b> 22 k from the switched +12/13 V line, 10 k to GND at the pin (&asymp; 4 V). Never the raw +13 V on a Nano pin.</div>
     </div>
   </div>
 
   <div class="grid">
     <!-- Buttons -->
     <div>
-      <h2>3. Buttons on A6 (resistor ladder)</h2>
+      <h2>3. Buttons on A6 (resistor ladder) <span class="tag">proposal</span></h2>
       <svg viewBox="0 0 330 150" aria-label="Button ladder on A6">
         <!-- +5V and pull-up -->
         <text x="6" y="12">+5 V</text>
@@ -119,7 +120,7 @@
           <line class="w" x1="90" y1="52" x2="90" y2="70"/>
           <line class="w" x1="90" y1="70" x2="100" y2="62"/><circle class="w" cx="90" cy="70" r="1.6"/><circle class="w" cx="90" cy="80" r="1.6"/>
           <line class="w" x1="90" y1="80" x2="90" y2="128"/>
-          <text x="96" y="98">0 &Omega;</text><text x="78" y="45">ATT</text>
+          <text x="96" y="98">0 &Omega;</text><text x="76" y="45">STEP</text>
         </g>
         <g>
           <line class="w" x1="150" y1="52" x2="150" y2="70"/>
@@ -131,7 +132,7 @@
           <line class="w" x1="210" y1="52" x2="210" y2="70"/>
           <line class="w" x1="210" y1="70" x2="220" y2="62"/><circle class="w" cx="210" cy="70" r="1.6"/><circle class="w" cx="210" cy="80" r="1.6"/>
           <polyline class="w" points="210,80 210,88 205,91 215,97 205,103 215,109 210,112 210,128"/>
-          <text x="218" y="102">4.7 k</text><text x="199" y="45">AGC</text>
+          <text x="218" y="102">4.7 k</text><text x="197" y="45">MENU</text>
         </g>
         <g>
           <line class="w" x1="270" y1="52" x2="270" y2="70"/>
@@ -147,49 +148,41 @@
       </svg>
       <table>
         <tr><th>Button</th><th>R to GND</th><th class="c">ADC</th><th class="c">Accept if</th></tr>
-        <tr><td>ATT on/off</td><td>0 &Omega; (direct)</td><td class="c">0</td><td class="c">&lt; 90</td></tr>
+        <tr><td>STEP</td><td>0 &Omega; (direct)</td><td class="c">0</td><td class="c">&lt; 90</td></tr>
         <tr><td>MODE LSB/USB</td><td>2.2 k</td><td class="c">184</td><td class="c">90&ndash;255</td></tr>
-        <tr><td>AGC fast/slow</td><td>4.7 k</td><td class="c">327</td><td class="c">255&ndash;420</td></tr>
+        <tr><td>MENU</td><td>4.7 k</td><td class="c">327</td><td class="c">255&ndash;420</td></tr>
         <tr><td>SPARE</td><td>10 k</td><td class="c">512</td><td class="c">420&ndash;770</td></tr>
         <tr><td>none</td><td>&mdash;</td><td class="c">1023</td><td class="c">&gt; 770</td></tr>
       </table>
-      <div class="note">A6/A7 have <b>no internal pull-up</b> &rarr; the external 10 k is required. One button at a time. Resistors 1&nbsp;% or 5&nbsp;% both fine.</div>
+      <div class="note">A6/A7 have <b>no internal pull-up</b> &rarr; the external 10 k is required. One button at a time; SPARE optional. Resistors 1&nbsp;% or 5&nbsp;% both fine.</div>
     </div>
 
     <!-- ATT + AGC -->
     <div>
-      <h2>4. Attenuator relay (D5) &mdash; RX path only</h2>
-      <svg viewBox="0 0 330 134" aria-label="Relay driver">
-        <text x="4" y="40">D5</text>
-        <line class="w" x1="18" y1="37" x2="30" y2="37"/>
-        <polyline class="w" points="30,37 34,37 37,32 43,42 49,32 55,42 61,32 64,37 70,37"/>
-        <text x="36" y="27">1 k</text>
-        <!-- transistor -->
-        <circle class="w" cx="96" cy="37" r="14"/>
-        <line class="w" x1="70" y1="37" x2="88" y2="37"/>
-        <line class="w" x1="88" y1="28" x2="88" y2="46"/>
-        <line class="w" x1="88" y1="32" x2="100" y2="22"/>
-        <line class="w" x1="88" y1="42" x2="100" y2="52"/>
-        <polygon class="f" points="100,52 94,51 98,47"/>
-        <text x="114" y="40">BC547</text>
-        <line class="w" x1="100" y1="52" x2="100" y2="74"/>
-        <line class="w" x1="90" y1="74" x2="110" y2="74"/><line class="w" x1="94" y1="78" x2="106" y2="78"/>
-        <text x="114" y="78">GND</text>
-        <!-- coil -->
-        <line class="w" x1="100" y1="22" x2="100" y2="10"/>
-        <line class="w" x1="100" y1="10" x2="200" y2="10"/>
-        <rect class="w" x="186" y="14" width="28" height="20"/>
-        <text x="219" y="27">relay coil</text>
-        <line class="w" x1="200" y1="10" x2="200" y2="14"/>
-        <line class="w" x1="200" y1="34" x2="200" y2="44"/>
-        <text x="194" y="54">+12 V</text>
-        <!-- diode -->
-        <line class="w" x1="170" y1="10" x2="170" y2="18"/>
-        <polygon class="w" points="164,28 176,28 170,18"/>
-        <line class="w" x1="164" y1="18" x2="176" y2="18"/>
-        <line class="w" x1="170" y1="28" x2="170" y2="44"/>
-        <line class="w" x1="170" y1="44" x2="200" y2="44"/>
-        <text x="132" y="25">1N4148</text>
+      <h2>4. ATT / PRE relays (rockers) &mdash; RX only</h2>
+      <svg viewBox="0 0 330 134" aria-label="Rocker switch to relay with sense divider">
+        <text x="4" y="40">+12 V</text>
+        <line class="w" x1="34" y1="37" x2="60" y2="37"/>
+        <circle class="w" cx="60" cy="37" r="1.6"/><line class="w" x1="60" y1="37" x2="80" y2="27"/><circle class="w" cx="82" cy="37" r="1.6"/>
+        <text x="50" y="20">rocker</text>
+        <line class="w" x1="82" y1="37" x2="200" y2="37"/>
+        <circle class="f" cx="116" cy="37" r="2"/>
+        <rect class="w" x="186" y="41" width="28" height="20"/>
+        <line class="w" x1="200" y1="37" x2="200" y2="41"/>
+        <line class="w" x1="200" y1="61" x2="200" y2="70"/>
+        <text x="219" y="55">relay coil</text>
+        <line class="w" x1="190" y1="70" x2="210" y2="70"/><line class="w" x1="194" y1="74" x2="206" y2="74"/>
+        <line class="w" x1="170" y1="37" x2="170" y2="45"/>
+        <polygon class="w" points="164,45 176,45 170,55"/>
+        <line class="w" x1="164" y1="55" x2="176" y2="55"/>
+        <line class="w" x1="170" y1="55" x2="170" y2="70"/><line class="w" x1="170" y1="70" x2="190" y2="70"/>
+        <text x="146" y="86">1N4148</text>
+        <polyline class="w" points="116,37 116,42 111,45 121,49 111,53 121,57 116,60 116,64"/>
+        <text x="124" y="54">22 k</text>
+        <line class="w" x1="116" y1="64" x2="90" y2="64"/><text x="62" y="67">D5/D6</text>
+        <polyline class="w" points="116,64 116,68 111,71 121,75 111,79 121,83 116,86 116,90"/>
+        <text x="124" y="80">10 k</text>
+        <line class="w" x1="108" y1="90" x2="124" y2="90"/><line class="w" x1="112" y1="94" x2="120" y2="94"/>
         <!-- pi pad -->
         <text x="4" y="100">10 dB &pi;-pad:</text>
         <text x="4" y="114">RX in</text>
@@ -205,18 +198,18 @@
         <text x="218" y="126">100 &Omega; &rarr; GND</text>
       </svg>
       <ul>
-        <li>&pi;-pad 100 / 68 / 100 &Omega; &asymp; 10 dB (exact: 96 / 71 / 96 &Omega;). Relay bypasses or inserts it.</li>
+        <li>&pi;-pad 100 / 68 / 100 &Omega; &asymp; 10 dB (exact: 96 / 71 / 96 &Omega;). Relay bypasses or inserts it. PRE relay wired the same way (switch, coil, sense to D6).</li>
         <li><span class="warn">Only in the receive line after the antenna relay &mdash; never in the TX path.</span> Short leads / thin coax.</li>
-        <li>5 V relay: coil to +5 V instead of +12 V. Diode cathode (band) to + side.</li>
+        <li>Better: one ON-OFF-ON rocker for ATT &ndash; OFF &ndash; PRE (both can never be on). Diode cathode (band) to + side.</li>
       </ul>
 
-      <h2>5. AGC fast/slow (D13) &mdash; later</h2>
+      <h2>5. AGC fast/slow &mdash; rocker switch, sense D13</h2>
       <ul>
-        <li>2N7000: gate via 100 &Omega; from D13, 100 k gate&ndash;GND, source GND, drain via R<sub>fast</sub> (~150&ndash;330 k, to try) to the AGC hold node on PC-300D.</li>
+        <li>2N7000 at PC-300D: gate via 100 &Omega; from the rocker (+12 V), 100 k gate&ndash;GND, source GND, drain via R<sub>fast</sub> (~150&ndash;330 k, to try) to the AGC hold node on PC-300D.</li>
         <li>Parts on PC-300D to be identified by value first (hold cap / 1 M discharge R).</li>
       </ul>
 
-      <h2>6. MODE LSB/USB</h2>
+      <h2>6. MODE (button) &middot; CW (sense D4)</h2>
       <div class="note">Software only: BFO moved to the other side of the crystal filter (5.520.000 &harr; ~5.523.3 MHz, to be set) &mdash; LO calculation follows automatically.</div>
     </div>
   </div>
