@@ -72,3 +72,28 @@ Test gear: FTdx10 as frequency reference, tinySA + step attenuator as signal sou
 - Low-pass filters on Si5351 CLK0 and CLK1 against spurs.
 - Button ladder on A6 (ATT / MODE / AGC / spare), RX attenuator, AGC fast/slow — see the wiring sheet.
 - USB extension to the back panel so both Nanos can be updated without opening the radio.
+
+## Work 2026-10-18/19
+- New 3D-printed front plate fitted.
+- LCD rewired with twisted groups (see the wiring sheet, section 1): E and RS each twisted with a ground,
+  +5 V / GND / V0 / backlight as one twisted group, data lines in pairs; 3 grounds on one GND pad.
+  470 ohm series resistors at the Nano end. Fault found and fixed: V0 and backlight wire on the same pad.
+- Copper tape (insulated both sides, grounded at one end) planned where the bundle passes the Si5351 LPF.
+- Front panel pots as fitted: RF gain 5 k, AF gain 10 k, MIC gain 20 k, ALC 100 k (originals 10 k).
+  Compensation (wiring sheet section 7): R5 2.2 k + R7 220 ohm; 20 k across MIC pot; 11 k across ALC pot.
+- R13 (10 k, mic gain top) reconnected to the +CW line (C6 / R14 junction, WHT/BLK to ACC): 0 V in REC and
+  SSB TX, +13 V in CW.
+- CW gives only a blip on key-down: the original carrier oscillator board shifted the carrier into the crystal
+  filter passband on +CW. With the Si5351 BFO fixed at 5.520 MHz the carrier is blocked by the filter.
+  Fix planned in the sketch: CW sense on A7 (22 k / 10 k divider from +CW), BFO moved into the passband in CW
+  (~5.5215 MHz, to tune), LO shifted by the same amount.
+- Low SSB modulation reported (only OK at max mic gain): first fit the 11 k across the ALC pot, then check
+  the mic type (needs a high-impedance mic) and the mic amp voltages on TX.
+
+## Next (Nano session)
+1. CW: A7 sense + BFO/LO shift in the sketch, then CW test into a dummy load.
+2. LCD layout: glyph test, then the new layout (see docs/lcd_mockup.html).
+3. Noise test after the LCD rewiring (antenna off, tune, hand-over-cable test).
+4. Fit the pot compensation resistors, re-check modulation on air.
+5. VariBeam: switch the sketch to the SSD1306 library for the new OLED.
+6. RX preamp idea: compare band noise antenna vs dummy load first.
