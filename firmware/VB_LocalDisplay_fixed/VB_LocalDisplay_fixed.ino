@@ -23,14 +23,14 @@
   installed in an Atlas 210X (YU5KBM).
 
   The front panel encoder is read by this Nano, which emulates encoder steps and
-  button presses to the VB and shows the filter on a 128x64 SH1106 OLED.
+  button presses to the VB and shows the filter on a 128x64 SSD1306 OLED (0.96", I2C 0x3C).
 
   2026-09 rework:
   - Emulated gray code states are held EMULATION_STATE_MS (before: microseconds,
     so the VB missed steps and drifted away from the displayed values).
   - Encoder detents are counted, fast turning no longer loses steps.
-  - Official Adafruit SH110X library, no OLED reset pin (the old OLED_RESET was
-    pin 4 = encoder switch pin).
+  - Official Adafruit SSD1306 library (2026-10: display changed from SH1106 to
+    SSD1306), no OLED reset pin (the old OLED_RESET was pin 4 = encoder switch pin).
   - Resync at power on: the VB is driven to its minimum (known state), then
     stepped up to the saved values. Hold the button RESYNC_HOLD_MS to resync
     at any time.
@@ -50,7 +50,7 @@
   CF 1500, BW 2400, mode CF. Each VB button press toggles CF / BW mode.
 */
 #include <Adafruit_GFX.h>
-#include <Adafruit_SH110X.h>
+#include <Adafruit_SSD1306.h>
 #include <EEPROM.h>
 
 /******************** Settings ****************/
@@ -85,15 +85,13 @@ uint8_t presetIndex = NUM_PRESETS - 1;   /*first double click selects presets[0]
 #define emulatedEncoderPinB 6     /*to VB encoder input B*/
 #define emulatedEncoderSwPin 7    /*to VB button input*/
 
-/*The library assumes a column offset of 2 (SH1106 with 132 columns of RAM). This module
-  wraps the two rightmost pixels around to the left edge with that offset, so it needs 0.
-  If the left edge of the picture is ever cut off by 2 pixels, set this back to 2.*/
-#define OLED_COLUMN_OFFSET 0
-class AtlasOLED : public Adafruit_SH1106G
+/*SSD1306: the charge pump (SSD1306_SWITCHCAPVCC) must be enabled or the panel stays dark.
+  setContrast() added for the DIM screen mode.*/
+class AtlasOLED : public Adafruit_SSD1306
 {
 public:
-  AtlasOLED() : Adafruit_SH1106G(128, 64, &Wire, -1) {}
-  void setColumnOffset(uint8_t o) { _page_start_offset = o; }
+  AtlasOLED() : Adafruit_SSD1306(128, 64, &Wire, -1) {}
+  void setContrast(uint8_t c) { ssd1306_command(SSD1306_SETCONTRAST); ssd1306_command(c); }
 };
 AtlasOLED display;
 
@@ -324,12 +322,12 @@ void displayStatus()
   int xl = freqToX(lo), xh = freqToX(hi);
   int bl = max(xl - SKIRT_PX, 0), bh = min(xh + SKIRT_PX, 127);
   const int yTop = 45, yBot = 53;
-  display.fillRect(xl, yTop, xh - xl + 1, yBot - yTop + 1, SH110X_WHITE);
-  display.fillTriangle(xl, yTop, xl, yBot, bl, yBot, SH110X_WHITE);
-  display.fillTriangle(xh, yTop, xh, yBot, bh, yBot, SH110X_WHITE);
-  display.drawFastHLine(0, 54, 128, SH110X_WHITE);
+  display.fillRect(xl, yTop, xh - xl + 1, yBot - yTop + 1, SSD1306_WHITE);
+  display.fillTriangle(xl, yTop, xl, yBot, bl, yBot, SSD1306_WHITE);
+  display.fillTriangle(xh, yTop, xh, yBot, bh, yBot, SSD1306_WHITE);
+  display.drawFastHLine(0, 54, 128, SSD1306_WHITE);
   for (int f = 500; f <= 3000; f += 500)    /*no ticks at the screen edges (0 / 3500 Hz)*/
-    display.drawFastVLine(freqToX(f), 54, (f % 1000 == 0) ? 3 : 2, SH110X_WHITE);
+    display.drawFastVLine(freqToX(f), 54, (f % 1000 == 0) ? 3 : 2, SSD1306_WHITE);
   display.setCursor(freqToX(1000) - 5, 57);
   display.print(F("1k"));
   display.setCursor(freqToX(2000) - 5, 57);
@@ -346,7 +344,7 @@ void wakeDisplay()
   if (!displayOn)
   {
     display.setContrast(CONTRAST_NORMAL);
-    display.oled_command(SH110X_DISPLAYON);
+    display.ssd1306_command(SSD1306_DISPLAYON);
     displayOn = true;
   }
 }
@@ -355,7 +353,7 @@ void wakeDisplay()
 void idleDisplay()
 {
   if (screenMode == SCREEN_OFF)
-    display.oled_command(SH110X_DISPLAYOFF);
+    display.ssd1306_command(SSD1306_DISPLAYOFF);
   else if (screenMode == SCREEN_DIM)
     display.setContrast(CONTRAST_DIM);
   if (screenMode != SCREEN_ON)
@@ -434,12 +432,12 @@ void splashScreen()
 /* Progress bar at the bottom of the splash / resync screen, 0-100 % */
 void showProgress(const __FlashStringHelper *text, int percent)
 {
-  display.fillRect(0, 48, 128, 16, SH110X_BLACK);
+  display.fillRect(0, 48, 128, 16, SSD1306_BLACK);
   display.setTextSize(1);
   display.setCursor(0, 48);
   display.print(text);
-  display.drawRect(0, 58, 128, 6, SH110X_WHITE);
-  display.fillRect(1, 59, (long)126 * percent / 100, 4, SH110X_WHITE);
+  display.drawRect(0, 58, 128, 6, SSD1306_WHITE);
+  display.fillRect(1, 59, (long)126 * percent / 100, 4, SSD1306_WHITE);
   display.display();
 }
 
@@ -597,10 +595,9 @@ void setup()
   }
   Serial.println(found ? F("scan done") : F("  NO I2C DEVICE FOUND - check OLED / wiring"));
 
-  display.begin(0x3C, true);                /*I2C address 0x3C, 128x64*/
-  display.setColumnOffset(OLED_COLUMN_OFFSET);
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C); /*I2C address 0x3C, 128x64, charge pump on*/
   display.setContrast(CONTRAST_NORMAL);
-  display.setTextColor(SH110X_WHITE);
+  display.setTextColor(SSD1306_WHITE);
   loadScreenMode();
   splashScreen();
 
