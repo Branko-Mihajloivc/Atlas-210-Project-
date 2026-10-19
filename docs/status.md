@@ -95,5 +95,5 @@ Test gear: FTdx10 as frequency reference, tinySA + step attenuator as signal sou
 2. LCD layout: glyph test, then the new layout (see docs/lcd_mockup.html).
 3. Noise test after the LCD rewiring (antenna off, tune, hand-over-cable test).
 4. Fit the pot compensation resistors, re-check modulation on air.
-5. VariBeam: switch the sketch to the SSD1306 library for the new OLED.
+5. (done 2026-10) VariBeam sketch switched to SSD1306, new OLED working.
 6. RX preamp idea: compare band noise antenna vs dummy load first.
