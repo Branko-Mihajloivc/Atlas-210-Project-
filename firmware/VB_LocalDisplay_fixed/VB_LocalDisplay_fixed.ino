@@ -34,7 +34,8 @@
   - Resync at power on: the VB is driven to its minimum (known state), then
     stepped up to the saved values. Hold the button RESYNC_HOLD_MS to resync
     at any time.
-  - Last CF / BW / mode saved in EEPROM and restored at power on.
+  - Last CF / BW saved in EEPROM and restored at power on. The knob always starts
+    in BW mode, and a preset also leaves it in BW mode.
   - Display shows passband edges and a trapezoid passband graph.
   - Screen after BLANK_AFTER_MS without use: OFF, DIM or ALWAYS ON (OLEDs make RF
     noise even when nothing changes). Turn the knob or press the button to wake it.
@@ -388,8 +389,7 @@ void nextPreset()
     vbClickEmulation();
   stepValueTo(p.cf);
   vbClickEmulation();                  /*CF -> BW*/
-  stepValueTo(p.bw);
-  vbClickEmulation();                  /*BW -> CF*/
+  stepValueTo(p.bw);                   /*stay in BW mode (the knob's default)*/
   takePendingSteps();
 
   delay(500);
@@ -606,7 +606,8 @@ void setup()
   modes mode;
   loadTargets(cf, bw, mode);
   currentMode = CF;                         /*VB is in CF mode after power on*/
-  resyncVB(cf, bw, mode);
+  resyncVB(cf, bw, BW);                     /*knob always starts in BW mode*/
+  (void)mode;
   delay(400);
 
   attachInterrupt(digitalPinToInterrupt(VBencoderPinA), serviceVBencoderPinA, CHANGE);
