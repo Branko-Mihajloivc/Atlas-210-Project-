@@ -148,7 +148,7 @@ BFO test result (2026-10-20): 14.194 tone changes pitch with the BFO (BFO +200 H
 Sniffer finds nothing radiated -> most likely Si5351 spurs: CLK0 (LO) and CLK1 (BFO) both run from PLLA at a fixed
 800 MHz with fractional output dividers (sketch: set_pll(SI5351_PLL_FIXED, SI5351_PLLA)). Fix to try in the sketch:
 BFO on its own PLL (PLLB) with an integer divider, LO with an even integer output divider and the PLL tuned instead.
-NEXT VFO NANO UPLOAD (agreed 2026-10-20): 1) Si5351 spur fix (BFO on PLLB integer, LO even integer divider),
+NEXT VFO NANO UPLOAD (agreed 2026-10-20): 1) Si5351 spur fix (BFO on PLLB integer, LO even integer divider), 1b) encoder direction-change fix,
 2) CW fix (CW sense + ~800 Hz BFO shift), then re-check the 20 m birdie list.
 Calibrator idea: Si5351 CLK2 via thin coax to where the PC-820 100 kHz cal board output fed the receiver,
 heavily attenuated; CLK2 enabled only in S3 CAL position (sense the CAL line) or from the menu - off otherwise.
@@ -163,3 +163,6 @@ in-band frequency (e.g. 14.100.000) into the antenna jack (attenuated) and set C
 or later a 1PPS input (e.g. J4 spare pin 9) for automatic CORR.
 J4 wiring (in progress 2026-10-20): VFO Nano only - TX/RX each twisted with GND, RST via 100 nF (cap at the Nano end)
 to J4 pin 4, PTT pair, audio in shielded cable separate. VariBeam Nano keeps its header pins for the TTL cable.
+VFO encoder (MBL600): loses one click on every direction change. Cause: Rotary library counts full cycles and
+emits at a fixed A/B state that does not match the MBL600 detent rest position. Fix (next VFO upload): own
+quadrature decoder - count all edges, one step per detent, re-align the count when the knob rests in a detent.
