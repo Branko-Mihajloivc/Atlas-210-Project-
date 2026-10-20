@@ -137,3 +137,9 @@ J4 (EXT OSC, 9-pin noval, rear) reuse - planned:
 14.256-14.261 tone -> garble -> hash -> FSK-like splatter. Most are inaudible with the antenna connected.
 Many are ~15.6 kHz apart (14.051/.067/.082, 14.151/.166/.182/.198, 14.241/.256) -> a comb from one digital
 clock (15.625 kHz = 16 MHz/1024 or 12 MHz/768). To find by elimination (see test plan).
+Test plan (50 ohm dummy load on the antenna jack, listen to the S9 one at 14.194 and the 14.198 "data"):
+1. Unplug the USB/TTL cable from the radio (PC USB noise / ground loop).
+2. VariBeam Nano + OLED: disconnect its supply (screen OFF mode is not enough).
+3. VFO Nano: build with DEBUG_SERIAL 0 (the 19200 status line toggles all the time).
+4. Tune +/-1 kHz across a birdie: a real carrier moves normally; a Si5351 mixing product moves faster, slower or the wrong way.
+5. Power supply: try a linear supply or a battery if a switch-mode supply is used.
