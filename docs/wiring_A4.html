@@ -4,17 +4,17 @@
 <meta charset="utf-8">
 <title>Atlas 210X VFO wiring</title>
 <style>
-  @page { size: A4 portrait; margin: 6mm; }
+  @page { size: A4 portrait; margin: 8mm; }
   :root { --ink: #111; --mute: #555; --line: #999; --soft: #eee; }
   * { box-sizing: border-box; }
   body { margin: 0; background: #fff; color: var(--ink);
-         font: 8.2pt/1.17 "Segoe UI", Arial, sans-serif; }
+         font: 8.5pt/1.25 "Segoe UI", Arial, sans-serif; }
   .page { width: 192mm; margin: 0 auto; }
   h1 { font-size: 14pt; margin: 0 0 1mm; }
   .sub { color: var(--mute); margin-bottom: 3mm; font-size: 8.5pt; }
-  h2 { font-size: 9.6pt; margin: 1.6mm 0 0.8mm; padding-bottom: .6mm; border-bottom: 1.2px solid var(--ink); }
+  h2 { font-size: 10pt; margin: 2.2mm 0 1mm; padding-bottom: .6mm; border-bottom: 1.2px solid var(--ink); }
   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm 6mm; }
-  table { border-collapse: collapse; width: 100%; font-size: 7.8pt; }
+  table { border-collapse: collapse; width: 100%; font-size: 8pt; }
   th, td { border: .6px solid var(--line); padding: .4mm 1.4mm; text-align: left; vertical-align: top; }
   th { background: var(--soft); }
   td.c, th.c { text-align: center; }
@@ -26,6 +26,7 @@
   svg text { font: 8px Arial, sans-serif; fill: var(--ink); }
   svg .w { stroke: var(--ink); stroke-width: 1.2; fill: none; }
   svg .f { fill: var(--ink); }
+  .pb { break-before: page; }
   .tag { display: inline-block; border: 1px solid var(--ink); border-radius: 2px; padding: 0 1.2mm; font-size: 7.5pt; }
   @media screen { body { background: #ccc; } .page { background: #fff; padding: 9mm; margin: 6mm auto; box-shadow: 0 0 6px #888; } }
 </style>
@@ -84,14 +85,14 @@
       <table>
         <tr><th>Pin</th><th>Now</th><th>Plan</th></tr>
         <tr><td>D0 / D1</td><td>Serial</td><td>TTL leads</td></tr>
-        <tr><td>D4</td><td>free</td><td>CW sense (+CW)</td></tr>
-        <tr><td>D5</td><td>free</td><td>ATT switch sense</td></tr>
-        <tr><td>D6</td><td>STEP button</td><td>PRE switch sense (STEP &rarr; A6)</td></tr>
-        <tr><td>D13</td><td>free (LED)</td><td>AGC fast switch sense</td></tr>
+        <tr><td>D4</td><td>free</td><td>AGC fast switch sense</td></tr>
+        <tr><td>D5</td><td>free</td><td>ATT relay sense</td></tr>
+        <tr><td>D6</td><td>STEP button</td><td>PRE relay sense (STEP &rarr; A6)</td></tr>
+        <tr><td>D13</td><td>free (LED)</td><td>spare &mdash; output only (LED loads the pin)</td></tr>
         <tr><td>A6</td><td>free (analog only)</td><td>STEP / MODE / MENU ladder</td></tr>
-        <tr><td>A7</td><td>free (analog only)</td><td>spare</td></tr>
+        <tr><td>A7</td><td>free (analog only)</td><td>S3 position: CW / CAL sense</td></tr>
       </table>
-      <div class="note">Used: D2/D3 encoder, D7&ndash;D12 LCD, A0/A1 S-meter, A2 TX, A3 band, A4/A5 I&sup2;C Si5351.<br><b>Sense inputs:</b> 22 k from the switched +12/13 V line, 10 k to GND at the pin (&asymp; 4 V). Never the raw +13 V on a Nano pin.</div>
+      <div class="note">Used: D2/D3 encoder, D7&ndash;D12 LCD, A0/A1 S-meter, A2 TX, A3 band, A4/A5 I&sup2;C Si5351.<br><b>Sense inputs:</b> switch on the GND side + 1N4148 to the pin (INPUT_PULLUP), or 22 k / 10 k divider from a +12 V line. Never the raw +13 V on a Nano pin.</div>
     </div>
   </div>
 
@@ -155,34 +156,64 @@
         <tr><td>none</td><td>&mdash;</td><td class="c">1023</td><td class="c">&gt; 770</td></tr>
       </table>
       <div class="note">A6/A7 have <b>no internal pull-up</b> &rarr; the external 10 k is required. One button at a time; SPARE optional. Resistors 1&nbsp;% or 5&nbsp;% both fine.</div>
+      <h2>6. MODE button &middot; S3 CW / CAL sense on A7 <span class="tag">proposal</span></h2>
+      <svg viewBox="0 0 330 74" aria-label="CW and CAL sense on A7">
+        <text x="4" y="14">+CW</text>
+        <line class="w" x1="28" y1="11" x2="50" y2="11"/>
+        <polygon class="w" points="50,5 50,17 60,11"/><line class="w" x1="60" y1="5" x2="60" y2="17"/>
+        <line class="w" x1="60" y1="11" x2="80" y2="11"/>
+        <polyline class="w" points="80,11 84,11 87,6 93,16 99,6 105,16 111,6 114,11 118,11"/>
+        <text x="88" y="27">22 k</text>
+        <line class="w" x1="118" y1="11" x2="160" y2="11"/><line class="w" x1="160" y1="11" x2="160" y2="30"/>
+        <text x="4" y="52">CAL</text>
+        <line class="w" x1="28" y1="49" x2="50" y2="49"/>
+        <polygon class="w" points="50,43 50,55 60,49"/><line class="w" x1="60" y1="43" x2="60" y2="55"/>
+        <line class="w" x1="60" y1="49" x2="80" y2="49"/>
+        <polyline class="w" points="80,49 84,49 87,44 93,54 99,44 105,54 111,44 114,49 118,49"/>
+        <text x="88" y="65">47 k</text>
+        <line class="w" x1="118" y1="49" x2="160" y2="49"/><line class="w" x1="160" y1="49" x2="160" y2="30"/>
+        <circle class="f" cx="160" cy="30" r="2"/>
+        <line class="w" x1="160" y1="30" x2="230" y2="30"/><text x="236" y="33">A7</text>
+        <line class="w" x1="200" y1="30" x2="200" y2="36"/>
+        <polyline class="w" points="200,36 195,39 205,43 195,47 205,51 195,55 200,58 200,62"/>
+        <text x="208" y="52">10 k</text>
+        <line class="w" x1="192" y1="62" x2="208" y2="62"/><line class="w" x1="196" y1="66" x2="204" y2="66"/>
+      </svg>
+      <table>
+        <tr><th>S3</th><th class="c">A7 (13 V)</th><th>Nano</th></tr>
+        <tr><td>CW</td><td class="c">&asymp; 3.8 V</td><td>BFO ~800 Hz into the passband, LO follows</td></tr>
+        <tr><td>CAL</td><td class="c">&asymp; 2.1 V</td><td>CLK2 calibrator on</td></tr>
+        <tr><td>REC / TRANS</td><td class="c">0 V</td><td>normal</td></tr>
+      </table>
+      <div class="note">MODE button = LSB/USB, software only (BFO to the other side of the crystal filter, LO follows).</div>
     </div>
 
     <!-- ATT + AGC -->
     <div>
-      <h2>4. ATT / PRE relays (rockers) &mdash; RX only</h2>
-      <svg viewBox="0 0 330 134" aria-label="Rocker switch to relay with sense divider">
-        <text x="4" y="40">+12 V</text>
-        <line class="w" x1="34" y1="37" x2="60" y2="37"/>
-        <circle class="w" cx="60" cy="37" r="1.6"/><line class="w" x1="60" y1="37" x2="80" y2="27"/><circle class="w" cx="82" cy="37" r="1.6"/>
-        <text x="50" y="20">rocker</text>
-        <line class="w" x1="82" y1="37" x2="200" y2="37"/>
-        <circle class="f" cx="116" cy="37" r="2"/>
-        <rect class="w" x="186" y="41" width="28" height="20"/>
-        <line class="w" x1="200" y1="37" x2="200" y2="41"/>
-        <line class="w" x1="200" y1="61" x2="200" y2="70"/>
-        <text x="219" y="55">relay coil</text>
-        <line class="w" x1="190" y1="70" x2="210" y2="70"/><line class="w" x1="194" y1="74" x2="206" y2="74"/>
-        <line class="w" x1="170" y1="37" x2="170" y2="45"/>
-        <polygon class="w" points="164,45 176,45 170,55"/>
-        <line class="w" x1="164" y1="55" x2="176" y2="55"/>
-        <line class="w" x1="170" y1="55" x2="170" y2="70"/><line class="w" x1="170" y1="70" x2="190" y2="70"/>
-        <text x="146" y="86">1N4148</text>
-        <polyline class="w" points="116,37 116,42 111,45 121,49 111,53 121,57 116,60 116,64"/>
-        <text x="124" y="54">22 k</text>
-        <line class="w" x1="116" y1="64" x2="90" y2="64"/><text x="62" y="67">D5/D6</text>
-        <polyline class="w" points="116,64 116,68 111,71 121,75 111,79 121,83 116,86 116,90"/>
-        <text x="124" y="80">10 k</text>
-        <line class="w" x1="108" y1="90" x2="124" y2="90"/><line class="w" x1="112" y1="94" x2="120" y2="94"/>
+      <h2>4. ATT / NORM / PRE &mdash; ON-OFF-ON rocker, DPDT relays, RX only <span class="tag">proposal</span></h2>
+      <svg viewBox="0 0 330 134" aria-label="Relay switched on the ground side with diode sense">
+        <text x="4" y="14">+12 V</text>
+        <line class="w" x1="34" y1="11" x2="200" y2="11"/>
+        <line class="w" x1="200" y1="11" x2="200" y2="15"/>
+        <rect class="w" x="186" y="15" width="28" height="20"/>
+        <text x="218" y="28">relay coil</text>
+        <line class="w" x1="200" y1="35" x2="200" y2="62"/>
+        <circle class="f" cx="200" cy="50" r="2"/>
+        <line class="w" x1="170" y1="11" x2="170" y2="18"/>
+        <line class="w" x1="164" y1="18" x2="176" y2="18"/>
+        <polygon class="w" points="164,30 176,30 170,18"/>
+        <line class="w" x1="170" y1="30" x2="170" y2="50"/><line class="w" x1="170" y1="50" x2="200" y2="50"/>
+        <text x="132" y="30">flyback</text>
+        <circle class="w" cx="200" cy="64" r="1.6"/><line class="w" x1="200" y1="64" x2="212" y2="72"/><circle class="w" cx="200" cy="78" r="1.6"/>
+        <line class="w" x1="200" y1="78" x2="200" y2="86"/>
+        <line class="w" x1="190" y1="86" x2="210" y2="86"/><line class="w" x1="194" y1="90" x2="206" y2="90"/>
+        <text x="216" y="70">rocker</text><text x="216" y="80">(common = GND)</text>
+        <line class="w" x1="200" y1="50" x2="240" y2="50"/>
+        <line class="w" x1="240" y1="44" x2="240" y2="56"/>
+        <polygon class="w" points="250,44 250,56 240,50"/>
+        <line class="w" x1="250" y1="50" x2="270" y2="50"/>
+        <text x="232" y="40">1N4148</text>
+        <text x="272" y="53">D5 / D6</text>
         <!-- pi pad -->
         <text x="4" y="100">10 dB &pi;-pad:</text>
         <text x="4" y="114">RX in</text>
@@ -198,23 +229,22 @@
         <text x="218" y="126">100 &Omega; &rarr; GND</text>
       </svg>
       <ul>
-        <li>&pi;-pad 100 / 68 / 100 &Omega; &asymp; 10 dB (exact: 96 / 71 / 96 &Omega;). Relay bypasses or inserts it. PRE relay wired the same way (switch, coil, sense to D6).</li>
+        <li>Coil high end on +12 V, the rocker switches the coil low end to GND (ATT or PRE, centre = NORM). The 1N4148 (band to the coil) passes the LOW to the Nano pin and blocks the +12 V when off.</li>
+        <li>DPDT signal relays: both poles switch the RF (in and out). &pi;-pad 100 / 68 / 100 &Omega; &asymp; 10 dB (exact: 96 / 71 / 96 &Omega;).</li>
         <li><span class="warn">Only in the receive line after the antenna relay &mdash; never in the TX path.</span> Short leads / thin coax.</li>
-        <li>Better: one ON-OFF-ON rocker for ATT &ndash; OFF &ndash; PRE (both can never be on). Diode cathode (band) to + side.</li>
       </ul>
 
-      <h2>5. AGC fast/slow &mdash; rocker switch, sense D13</h2>
+      <h2>5. AGC fast/slow &mdash; rocker switch, sense D4 <span class="tag">proposal</span></h2>
       <ul>
         <li>2N7000 at PC-300D: gate via 100 &Omega; from the rocker (+12 V), 100 k gate&ndash;GND, source GND, drain via R<sub>fast</sub> (~150&ndash;330 k, to try) to the AGC hold node on PC-300D.</li>
         <li>Parts on PC-300D to be identified by value first (hold cap / 1 M discharge R).</li>
+        <li>Sense: rocker on the GND side + 1N4148 to D4, or 22 k / 10 k divider from the switched +12 V.</li>
       </ul>
 
-      <h2>6. MODE (button) &middot; CW (sense D4)</h2>
-      <div class="note">Software only: BFO moved to the other side of the crystal filter (5.520.000 &harr; ~5.523.3 MHz, to be set) &mdash; LO calculation follows automatically.</div>
     </div>
   </div>
 
-  <h2>7. Front panel gain controls &mdash; 2 concentric dual pots, fixes for the new values</h2>
+  <h2 class="pb">7. Front panel gain controls &mdash; 2 concentric dual pots, fixes for the new values</h2>
   <div class="grid">
     <div>
       <table>
@@ -250,6 +280,43 @@
       <ul>
         <li>AGC / S-meter pickoff is before pin 22. Shielded audio leads, shield grounded at one end.</li>
         <li>R13 10 k (mic gain top) goes to the WHT/BLK <b>+CW</b> line (S3 CW / PC-100 pin 18), 0 V in SSB. Not PC-100 pin 21 (+13 V on every TX).</li>
+      </ul>
+    </div>
+  </div>
+  <div class="grid">
+    <div>
+      <h2>8. J4 rear socket (old EXT OSC) &mdash; CAT / PTT / audio <span class="tag">proposal</span></h2>
+      <table>
+        <tr><th class="c">Pin</th><th>Use</th></tr>
+        <tr><td class="c">1</td><td>GND (digital)</td></tr>
+        <tr><td class="c">2</td><td>Nano TX (D1) &rarr; adapter RX</td></tr>
+        <tr><td class="c">3</td><td>Nano RX (D0) &larr; adapter TX</td></tr>
+        <tr><td class="c">4</td><td>Nano RST via 100 nF from adapter DTR (programming from the rear)</td></tr>
+        <tr><td class="c">5</td><td>PTT: key line to GND (transistor / opto)</td></tr>
+        <tr><td class="c">6</td><td>Audio out (RX audio to PC)</td></tr>
+        <tr><td class="c">7</td><td>Audio in (PC to mic input, attenuated)</td></tr>
+        <tr><td class="c">8</td><td>Audio GND (separate from digital GND)</td></tr>
+        <tr><td class="c">9</td><td>spare</td></tr>
+      </table>
+      <ul>
+        <li>First clear all internal wires. Where a lug joins 2+ wires, splice them (keep +CW to R13 and C6/R14, +13 V, CW GND). Then check REC / SSB TX / CW and that all 9 pins are open.</li>
+        <li>USB-TTL adapter outside the radio. Audio via 600:600 isolation transformers, shielded audio wires inside, away from the serial pair.</li>
+        <li>Serial debug output off while CAT is in use.</li>
+      </ul>
+    </div>
+    <div>
+      <h2>9. Calibrator &mdash; Si5351 CLK2 <span class="tag">proposal</span></h2>
+      <ul>
+        <li>Thin coax from CLK2 to where the PC-820 100 kHz cal board fed the receiver input.</li>
+        <li>Inject weakly: 1&ndash;2 pF or 47 k in series at the injection point (marker about S9 or less).</li>
+        <li>CLK2 on only in S3 CAL (A7 sense) or from the menu &mdash; off otherwise (a running CLK2 can add spurs).</li>
+        <li>100 kHz-style markers or an exact carrier (e.g. 14.100.000). With a GPSDO 1PPS the Nano can calibrate CORR automatically.</li>
+      </ul>
+      <h2>10. Next VFO Nano upload</h2>
+      <ul>
+        <li>Si5351 spur fix: BFO on PLLB (integer), LO with an even integer output divider.</li>
+        <li>CW: A7 sense, BFO shift ~800 Hz in CW, LO follows.</li>
+        <li>Then re-check the 20 m birdie list (status notes).</li>
       </ul>
     </div>
   </div>
