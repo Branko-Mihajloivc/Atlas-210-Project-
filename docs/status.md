@@ -152,3 +152,5 @@ NEXT VFO NANO UPLOAD (agreed 2026-10-20): 1) Si5351 spur fix (BFO on PLLB intege
 2) CW fix (CW sense + ~800 Hz BFO shift), then re-check the 20 m birdie list.
 Calibrator idea: Si5351 CLK2 via thin coax to where the PC-820 100 kHz cal board output fed the receiver,
 heavily attenuated; CLK2 enabled only in S3 CAL position (sense the CAL line) or from the menu - off otherwise.
+LCD rewiring check (2026-10-20): super probe hears the LCD data lines only when almost touching the wire
+(no "before" measurement, but the earlier hand-over-cable noise was clearly audible in the receiver).
