@@ -123,3 +123,9 @@ Hardware mods (radio):
 - PA check: bias, heat sink compound.
 - Fan on the heat sink (needed for FT8 / high duty cycle).
 Suggested order after the current list: CAT + PTT (+ TX timeout), power/SWR display, mic preamp, AGC mod.
+J4 (EXT OSC, 9-pin noval, rear) reuse - planned:
+- Clear all internal wires; where a lug joins 2+ wires, splice them (keep +CW to R13 / C6-R14, +13 V, CW GND paths).
+  Afterwards check REC / SSB TX / CW and that all 9 pins are open.
+- Proposed pins: 1 GND, 2 Nano TX (D1), 3 Nano RX (D0), 4 RST via 100 nF from DTR (rear programming),
+  5 PTT (key line via transistor/opto), 6 audio out, 7 audio in (attenuated), 8 audio GND, 9 spare.
+  Audio via 600:600 isolation transformers, shielded audio wires inside.
