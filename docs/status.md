@@ -177,3 +177,4 @@ J4 found: 1 unused, 2-3 jumper (old VFO coax path, remove), 4 GND, 5 orange +8.5
 J4 new plan: 1 RST (grey, 100 nF at the Nano end), 2 Nano TX D1 (green), 3 Nano RX D0 (white), 4 GND (black),
 5 / 7 audio (direction to decide), 6 audio GND PC side - floating, open to chassis, 8 PTT (proposed), 9 spare.
 External adapter: adapter RX -> pin 2, adapter TX -> pin 3, GND -> pin 4, DTR -> pin 1, adapter +5 V not used.
+J4 final: 5 audio in (PC->TX), 6 audio GND PC side floating, 7 audio out (RX->PC), 8 PTT.
