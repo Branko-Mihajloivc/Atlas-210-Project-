@@ -143,3 +143,8 @@ Test plan (50 ohm dummy load on the antenna jack, listen to the S9 one at 14.194
 3. VFO Nano: build with DEBUG_SERIAL 0 (the 19200 status line toggles all the time).
 4. Tune +/-1 kHz across a birdie: a real carrier moves normally; a Si5351 mixing product moves faster, slower or the wrong way.
 5. Power supply: try a linear supply or a battery if a switch-mode supply is used.
+BFO test result (2026-10-20): 14.194 tone changes pitch with the BFO (BFO +200 Hz -> gone, -200 Hz -> higher)
+-> NOT a real outside signal, it is generated inside the radio (a real signal keeps its pitch, the LO follows the BFO).
+Sniffer finds nothing radiated -> most likely Si5351 spurs: CLK0 (LO) and CLK1 (BFO) both run from PLLA at a fixed
+800 MHz with fractional output dividers (sketch: set_pll(SI5351_PLL_FIXED, SI5351_PLLA)). Fix to try in the sketch:
+BFO on its own PLL (PLLB) with an integer divider, LO with an even integer output divider and the PLL tuned instead.
