@@ -113,3 +113,13 @@ Hardware:
 Bigger projects:
 - Semi-break-in CW with sidetone.
 - Data-mode interface (line in/out + PTT via ACC) together with CAT.
+Hardware mods (radio):
+- Mic preamp for low-impedance dynamic mics (likely cure for the low modulation).
+- AGC attack/release mod (Atlas bulletin, Engineering Supplement) - faster AGC recovery.
+- Bass-response caps on PC-300 (Engineering Supplement) - fuller RX audio.
+- IF tap (buffered 5.52 MHz) for an SDR panadapter.
+- Socket the CA3086 on PC-200 (usual S-meter / mic amp failure part).
+- Replace the loose R101 carrier balance trimmer (PC-100), re-null the carrier.
+- PA check: bias, heat sink compound.
+- Fan on the heat sink (needed for FT8 / high duty cycle).
+Suggested order after the current list: CAT + PTT (+ TX timeout), power/SWR display, mic preamp, AGC mod.
