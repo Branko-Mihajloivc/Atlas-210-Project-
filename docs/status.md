@@ -157,3 +157,7 @@ LCD rewiring check (2026-10-20): super probe hears the LCD data lines only when 
 Hand test after rewiring: no change in noise with the hand over the LCD cable; PC-100 cans, transformers and pot
 barely react; the previously very touch-sensitive coil now reacts minimally. Only touching an exposed PC-100
 transformer leg gives a clear change (expected: direct contact with an RF node).
+Calibrator (CLK2): KEEP on the plan for now - may be used as a built-in signal generator. Decide later.
+GPSDO: only needed occasionally for calibration, not permanently installed. Options: GPSDO set to an
+in-band frequency (e.g. 14.100.000) into the antenna jack (attenuated) and set CORR in the menu by ear / tone;
+or later a 1PPS input (e.g. J4 spare pin 9) for automatic CORR.
