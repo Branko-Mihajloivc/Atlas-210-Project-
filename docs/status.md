@@ -129,3 +129,11 @@ J4 (EXT OSC, 9-pin noval, rear) reuse - planned:
 - Proposed pins: 1 GND, 2 Nano TX (D1), 3 Nano RX (D0), 4 RST via 100 nF from DTR (rear programming),
   5 PTT (key line via transistor/opto), 6 audio out, 7 audio in (attenuated), 8 audio GND, 9 spare.
   Audio via 600:600 isolation transformers, shielded audio wires inside.
+
+## Birdies 20 m, antenna disconnected (2026-10-20)
+14.051 tone S7 · 14.067 garble + chirps/ticks S5-6 · 14.082 tone S2 · 14.125 weak tone · 14.134 hum S0 ·
+14.139 hum/data S0 · 14.151 low tone S0 · 14.166 fast "cricket" S0 · 14.173 · 14.182 tone S0 · 14.188 hash S0 ·
+14.194 tone S9 · 14.198 gurgling/data S8 · 14.206 tone S2 · 14.233 tone S2 · 14.241 tone S0 ·
+14.256-14.261 tone -> garble -> hash -> FSK-like splatter. Most are inaudible with the antenna connected.
+Many are ~15.6 kHz apart (14.051/.067/.082, 14.151/.166/.182/.198, 14.241/.256) -> a comb from one digital
+clock (15.625 kHz = 16 MHz/1024 or 12 MHz/768). To find by elimination (see test plan).
