@@ -166,3 +166,5 @@ to J4 pin 4, PTT pair, audio in shielded cable separate. VariBeam Nano keeps its
 VFO encoder (MBL600): loses one click on every direction change. Cause: Rotary library counts full cycles and
 emits at a fixed A/B state that does not match the MBL600 detent rest position. Fix (next VFO upload): own
 quadrature decoder - count all edges, one step per detent, re-align the count when the knob rests in a detent.
+Pot compensation (wiring sheet section 7) DONE 2026-10-20: RF gain R5/R7, 20 k across MIC gain, 11 k across ALC.
+To check on air: modulation level at normal mic gain (was only OK at max), RF gain range.
