@@ -97,3 +97,19 @@ Test gear: FTdx10 as frequency reference, tinySA + step attenuator as signal sou
 4. Fit the pot compensation resistors, re-check modulation on air.
 5. (done 2026-10) VariBeam sketch switched to SSD1306, new OLED working.
 6. RX preamp idea: compare band noise antenna vs dummy load first.
+
+## Ideas list (agreed 2026-10-20, not started)
+Software (VFO Nano):
+- VFO A/B + split (control scheme to decide).
+- Tuning acceleration (10 Hz base step, bigger steps when turning fast).
+- CAT control over USB (Kenwood-style protocol) - top wish. PTT over CAT needs a Nano-driven key line transistor.
+- Si5351 CLK2 as test signal / calibrator; GPSDO for calibration (e.g. 1PPS-gated count of CLK2 for auto CORR).
+- TX timeout: only if the Nano ever controls TX (CAT PTT / break-in).
+Hardware:
+- TX power / SWR display (PC-1100 bridge forward/reflected via dividers).
+- Heat sink temperature + fan control.
+- Supply voltage display - possibly on the VariBeam Nano / OLED (free analog pins there).
+- Reverse polarity protection + fuse on the 12 V input.
+Bigger projects:
+- Semi-break-in CW with sidetone.
+- Data-mode interface (line in/out + PTT via ACC) together with CAT.
