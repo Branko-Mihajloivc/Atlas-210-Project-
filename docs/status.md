@@ -168,3 +168,7 @@ emits at a fixed A/B state that does not match the MBL600 detent rest position. 
 quadrature decoder - count all edges, one step per detent, re-align the count when the knob rests in a detent.
 Pot compensation (wiring sheet section 7) DONE 2026-10-20: RF gain R5/R7, 20 k across MIC gain, 11 k across ALC.
 To check on air: modulation level at normal mic gain (was only OK at max), RF gain range.
+CLK2 as RX check source: use S5-S7 (about -97 / -91 / -85 dBm) - well above internal leakage, repeatable for
+health checks, S-meter check and band comparison. Leakage test: CLK2 on, injection wire disconnected -> S-meter
+should show nothing / well below S1. Real MDS / sensitivity: external tinySA + step attenuator.
+J4 check: pin 1 (+CW in the original drawing) was never wired in this radio (clean contact, no solder).
