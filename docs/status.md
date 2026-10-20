@@ -154,3 +154,6 @@ Calibrator idea: Si5351 CLK2 via thin coax to where the PC-820 100 kHz cal board
 heavily attenuated; CLK2 enabled only in S3 CAL position (sense the CAL line) or from the menu - off otherwise.
 LCD rewiring check (2026-10-20): super probe hears the LCD data lines only when almost touching the wire
 (no "before" measurement, but the earlier hand-over-cable noise was clearly audible in the receiver).
+Hand test after rewiring: no change in noise with the hand over the LCD cable; PC-100 cans, transformers and pot
+barely react; the previously very touch-sensitive coil now reacts minimally. Only touching an exposed PC-100
+transformer leg gives a clear change (expected: direct contact with an RF node).
