@@ -161,3 +161,5 @@ Calibrator (CLK2): KEEP on the plan for now - may be used as a built-in signal g
 GPSDO: only needed occasionally for calibration, not permanently installed. Options: GPSDO set to an
 in-band frequency (e.g. 14.100.000) into the antenna jack (attenuated) and set CORR in the menu by ear / tone;
 or later a 1PPS input (e.g. J4 spare pin 9) for automatic CORR.
+J4 wiring (in progress 2026-10-20): VFO Nano only - TX/RX each twisted with GND, RST via 100 nF (cap at the Nano end)
+to J4 pin 4, PTT pair, audio in shielded cable separate. VariBeam Nano keeps its header pins for the TTL cable.
