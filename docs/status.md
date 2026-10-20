@@ -172,3 +172,8 @@ CLK2 as RX check source: use S5-S7 (about -97 / -91 / -85 dBm) - well above inte
 health checks, S-meter check and band comparison. Leakage test: CLK2 on, injection wire disconnected -> S-meter
 should show nothing / well below S1. Real MDS / sensitivity: external tinySA + step attenuator.
 J4 check: pin 1 (+CW in the original drawing) was never wired in this radio (clean contact, no solder).
+J4 found: 1 unused, 2-3 jumper (old VFO coax path, remove), 4 GND, 5 orange +8.5 V, 6 cut white/orange stub,
+7 yellow T line, 8 red +13 V via fuse, 9 to check. Old wires to be removed (check other ends / splice).
+J4 new plan: 1 RST (grey, 100 nF at the Nano end), 2 Nano TX D1 (green), 3 Nano RX D0 (white), 4 GND (black),
+5 / 7 audio (direction to decide), 6 audio GND PC side - floating, open to chassis, 8 PTT (proposed), 9 spare.
+External adapter: adapter RX -> pin 2, adapter TX -> pin 3, GND -> pin 4, DTR -> pin 1, adapter +5 V not used.
