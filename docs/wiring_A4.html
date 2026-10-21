@@ -92,7 +92,7 @@
         <tr><td>A6</td><td>free (analog only)</td><td>STEP / MODE / MENU ladder</td></tr>
         <tr><td>A7</td><td>free (analog only)</td><td>S3 position: CW / CAL sense</td></tr>
       </table>
-      <div class="note">Used: D2/D3 encoder, D7&ndash;D12 LCD, A0/A1 S-meter, A2 TX, A3 band, A4/A5 I&sup2;C Si5351.<br><b>Sense inputs:</b> switch on the GND side + 1N4148 to the pin (INPUT_PULLUP), or 22 k / 10 k divider from a +12 V line. Never the raw +13 V on a Nano pin.</div>
+      <div class="note">Used: D2/D3 encoder, D7&ndash;D12 LCD, A0/A1 S-meter, A3 band, A4/A5 I&sup2;C Si5351. <b>A2 TX sense</b> (LOW = TX): KEY line &rarr; 1N4148 (band to the key line) &rarr; A2 &mdash; appears unconnected now, check when open.<br><b>Sense inputs:</b> switch on the GND side + 1N4148 to the pin (INPUT_PULLUP), or 22 k / 10 k divider from a +12 V line. Never the raw +13 V on a Nano pin.</div>
     </div>
   </div>
 
