@@ -174,7 +174,7 @@ should show nothing / well below S1. Real MDS / sensitivity: external tinySA + s
 J4 check: pin 1 (+CW in the original drawing) was never wired in this radio (clean contact, no solder).
 J4 found: 1 unused, 2-3 jumper (old VFO coax path, remove), 4 GND, 5 orange +8.5 V, 6 cut white/orange stub,
 7 yellow T line, 8 red +13 V via fuse, 9 to check. Old wires to be removed (check other ends / splice).
-J4 new plan: 1 RST (grey, 100 nF at the Nano end), 2 Nano TX D1 (green), 3 Nano RX D0 (white), 4 GND (black),
+J4 new plan: 1 RST (grey, 10 nF / 103 in series at the Nano end), 2 Nano TX D1 (green), 3 Nano RX D0 (white), 4 GND (black),
 5 / 7 audio (direction to decide), 6 audio GND PC side - floating, open to chassis, 8 PTT (proposed), 9 spare.
 External adapter: adapter RX -> pin 2, adapter TX -> pin 3, GND -> pin 4, DTR -> pin 1, adapter +5 V not used.
 J4 final: 5 audio in (PC->TX), 6 audio GND PC side floating, 7 audio out (RX->PC), 8 PTT.

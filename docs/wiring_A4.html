@@ -288,7 +288,7 @@
       <h2>8. J4 rear socket (old EXT OSC) &mdash; CAT / PTT / audio <span class="tag">proposal</span></h2>
       <table>
         <tr><th class="c">Pin</th><th>Use</th></tr>
-        <tr><td class="c">1</td><td>RST (grey) &mdash; 100 nF at the Nano end, from adapter DTR (programming from the rear)</td></tr>
+        <tr><td class="c">1</td><td>RST (grey) &mdash; <b>10 nF (103) in series</b> between pin 1 and Nano RST, at the Nano end (not to GND). From adapter DTR (programming from the rear)</td></tr>
         <tr><td class="c">2</td><td>Nano TX D1 (green) &rarr; adapter RX</td></tr>
         <tr><td class="c">3</td><td>Nano RX D0 (white) &larr; adapter TX</td></tr>
         <tr><td class="c">4</td><td>GND (black, chassis / Nano GND)</td></tr>
@@ -301,7 +301,7 @@
       <ul>
         <li>Found: 2&ndash;3 jumper (old VFO path), 4 GND, 5 +8.5 V, 6 cut stub, 7 T line, 8 +13 V fused &mdash; remove all except the GND (check the other ends, splice junctions). Pin 1 was never wired. Then check REC / SSB TX / CW.</li>
         <li>USB-TTL adapter outside the radio. Audio via 600:600 isolation transformers, shielded audio wires inside, away from the serial pair.</li>
-        <li>Serial debug output off while CAT is in use.</li>
+        <li>Serial debug output off while CAT is in use. If a CAT program resets the Nano on connect, set DTR off in its settings.</li>
       </ul>
     </div>
     <div>
