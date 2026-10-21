@@ -8,6 +8,11 @@ h1 { font-size: 13pt; margin: 0 0 1mm; }
 .sub { color: #555; font-size: 8.5pt; margin-bottom: 1mm; }
 svg { width: 222mm; height: auto; display: block; margin: 0 auto; }
 ul { margin: 1mm 0 0 4mm; padding: 0; font-size: 8.5pt; }
+.pb { break-before: page; }
+table { border-collapse: collapse; width: 100%; font-size: 9.5pt; margin-top: 2mm; }
+th, td { border: .6px solid #999; padding: 1.2mm 2mm; text-align: left; vertical-align: top; }
+th { background: #eee; }
+tr.grp td { background: #f5f5f5; font-weight: 700; }
 @media screen { body { background: #ccc; } .page { background: #fff; padding: 8mm; margin: 6mm auto; } }
 </style></head><body><div class="page">
 <h1>Atlas 210X &mdash; VFO Nano buttons, rockers, relays and sense wires</h1>
@@ -17,5 +22,35 @@ ul { margin: 1mm 0 0 4mm; padding: 0; font-size: 8.5pt; }
 <li>From the Nano to the front / relays: <b>A6, GND, D4, D5, D6</b>. A2 goes to the KEY line, A7 to the S3 network. The +12 V comes from the radio, never from the Nano.</li>
 <li>D5 / D6 / A2: Nano internal pull-up, LOW = on. D6 becomes PRE sense only after STEP has moved to A6. Relay contacts (RF in / out of the &pi;-pad and preamp) are not shown.</li>
 <li>A7: CW &asymp; 3.8 V, CAL &asymp; 2.1 V, REC / TRANS 0 V. Set CW_SENSE_FITTED 1 in the sketch once this network is wired.</li>
+</ul>
+</div>
+<div class="page pb">
+<h1>Wires leaving the VFO box</h1>
+<div class="sub">Everything to run while the VFO box is open. Parts (diodes, resistors) at the far end unless noted.</div>
+<table>
+<tr><th>#</th><th>Nano pin</th><th>Wire</th><th>Far end</th><th>Parts / notes</th></tr>
+<tr class="grp"><td colspan="5">Rear socket J4 &mdash; twisted 4-wire set</td></tr>
+<tr><td>1</td><td>RST</td><td>grey</td><td>J4 pin 1</td><td>10 nF (103) in series, <b>at the Nano end</b></td></tr>
+<tr><td>2</td><td>D1 (TX)</td><td>green</td><td>J4 pin 2</td><td>to adapter RX</td></tr>
+<tr><td>3</td><td>D0 (RX)</td><td>white</td><td>J4 pin 3</td><td>from adapter TX</td></tr>
+<tr><td>4</td><td>GND</td><td>black</td><td>J4 pin 4</td><td>chassis / Nano GND</td></tr>
+<tr class="grp"><td colspan="5">Front panel buttons &mdash; twisted pair</td></tr>
+<tr><td>5</td><td>A6</td><td></td><td>STEP / MODE / MENU</td><td>10 k pull-up A6&ndash;5 V at the Nano; 0 / 2.2 k / 4.7 k + 100 nF at the buttons</td></tr>
+<tr><td>6</td><td>GND</td><td></td><td>buttons common</td><td>also the ATT/PRE rocker common</td></tr>
+<tr class="grp"><td colspan="5">Sense inputs (Nano only listens, 5 V or less on the wire)</td></tr>
+<tr><td>7</td><td>D5</td><td></td><td>ATT relay coil low end</td><td>1N4148, band to the coil</td></tr>
+<tr><td>8</td><td>D6</td><td></td><td>PRE relay coil low end</td><td>1N4148, band to the coil (after STEP moved to A6)</td></tr>
+<tr><td>9</td><td>D4</td><td></td><td>AGC switched +12 V</td><td>22 k series + 10 k to GND (divider at the far end)</td></tr>
+<tr><td>10</td><td>A2</td><td></td><td>KEY line</td><td>1N4148, band to the KEY line</td></tr>
+<tr><td>11</td><td>A7</td><td></td><td>S3 network</td><td>+CW &rarr; 1N4148 &rarr; 22 k, CAL &rarr; 1N4148 &rarr; 47 k, 10 k to GND</td></tr>
+<tr class="grp"><td colspan="5">Output / supply</td></tr>
+<tr><td>12</td><td>D13</td><td></td><td>KEY line / J4 pin 8 area</td><td>CAT PTT later: 100 &Omega; &rarr; 2N7000 gate, 100 k G&ndash;S, drain to KEY line. Leave open, label it</td></tr>
+<tr><td>13</td><td>+5 V</td><td></td><td>front / relay area</td><td>small future circuits, &lt; 50 mA</td></tr>
+<tr class="grp"><td colspan="5">RF</td></tr>
+<tr><td>14</td><td>Si5351 CLK2</td><td>thin coax</td><td>old PC-820 cal injection point</td><td>leave the receiver end open for now; later 1&ndash;2 pF or 47 k in series</td></tr>
+</table>
+<ul>
+<li>Not from the VFO box: J4 pins 5&ndash;8 (audio via transformers, PTT to the KEY line) and the rocker / relay +12 V wiring.</li>
+<li>Route along the chassis, cross coax at 90&deg;. If a reading jumps on TX: 100 nF from that pin to GND at the Nano.</li>
 </ul>
 </div></body></html>

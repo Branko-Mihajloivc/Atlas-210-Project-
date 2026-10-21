@@ -19,9 +19,12 @@ DARK_CSS = '''
 <style>
   html, body { background: #1c1c1c !important; color: #dcdcdc !important;
                -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .page { background: #1c1c1c !important; box-shadow: none !important; }
+  @page { margin: 0; }
+  .page { background: #1c1c1c !important; box-shadow: none !important; margin: 0 !important; width: auto !important;
+          padding: 8mm !important; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
   :root { --ink: #dcdcdc; --mute: #a0a0a0; --line: #5a5a5a; --soft: #2c2c2c; }
   th { background: #2c2c2c !important; }
+  tr.grp td { background: #262626 !important; }
   th, td { border-color: #5a5a5a !important; }
   h2 { border-bottom-color: #dcdcdc !important; }
   .tag { border-color: #dcdcdc !important; }
