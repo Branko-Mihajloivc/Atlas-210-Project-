@@ -85,7 +85,7 @@
         <tr><td>D4</td><td>free</td><td>AGC fast switch sense</td></tr>
         <tr><td>D5</td><td>free</td><td>ATT relay sense</td></tr>
         <tr><td>D6</td><td>STEP button</td><td>PRE relay sense (STEP &rarr; A6)</td></tr>
-        <tr><td>D13</td><td>free</td><td>CAT PTT &rarr; 2N7000 (wire run)</td></tr>
+        <tr><td>D13</td><td>free</td><td>CAT PTT &rarr; NPN (wire run)</td></tr>
         <tr><td>A6</td><td>free (analog)</td><td>STEP / MODE / MENU ladder</td></tr>
         <tr><td>A7</td><td>free (analog)</td><td>S3 position: CW / CAL sense</td></tr>
         <tr><td>+5 V</td><td>LCD, pot</td><td>+ 1 wire out to the front (&lt; 50 mA)</td></tr>
@@ -299,7 +299,7 @@
       <ul>
         <li>Old wires (2&ndash;3 jumper, 5 +8.5 V, 6 stub, 7 T line, 8 +13 V fused) removed, GND on 4 kept. Check REC / SSB TX / CW after.</li>
         <li>USB-TTL adapter outside. Audio via 600:600 transformers, shielded, away from the serial pair. RX audio from PC-300 pin 22 (before the VariBeam).</li>
-        <li>PTT now: PC grounds pin 8 (adapter RTS via NPN/opto). Later CAT PTT: D13 &rarr; 100 &Omega; &rarr; 2N7000 (100 k G&ndash;S), drain to KEY line. PTT on RTS, never DTR (resets the Nano). Debug serial off with CAT.</li>
+        <li>PTT now: PC grounds pin 8 (adapter RTS via NPN/opto). Later CAT PTT: D13 &rarr; 4.7 k &rarr; NPN base (BC547, 47 k B&ndash;E), collector to KEY line, emitter GND (KEY line draws 2.1 mA). PTT on RTS, never DTR (resets the Nano). Debug serial off with CAT.</li>
       </ul>
     </div>
     <div>

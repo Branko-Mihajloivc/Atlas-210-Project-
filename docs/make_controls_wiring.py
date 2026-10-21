@@ -293,7 +293,7 @@ tr.grp td { background: #f5f5f5; font-weight: 700; }
 <tr><td>10</td><td>A2</td><td></td><td>KEY line</td><td>1N4148, band to the KEY line</td></tr>
 <tr><td>11</td><td>A7</td><td></td><td>S3 network</td><td>+CW &rarr; 1N4148 &rarr; 22 k, CAL &rarr; 1N4148 &rarr; 47 k, 10 k to GND</td></tr>
 <tr class="grp"><td colspan="5">Output / supply</td></tr>
-<tr><td>12</td><td>D13</td><td></td><td>KEY line / J4 pin 8 area</td><td>CAT PTT later: 100 &Omega; &rarr; 2N7000 gate, 100 k G&ndash;S, drain to KEY line. Leave open, label it</td></tr>
+<tr><td>12</td><td>D13</td><td></td><td>KEY line / J4 pin 8 area</td><td>CAT PTT later: 4.7 k &rarr; NPN base (BC547), 47 k B&ndash;E, collector to KEY line, emitter GND (KEY line 2.1 mA). Leave open, label it</td></tr>
 <tr><td>13</td><td>+5 V</td><td></td><td>front / relay area</td><td>small future circuits, &lt; 50 mA</td></tr>
 <tr class="grp"><td colspan="5">RF</td></tr>
 <tr><td>14</td><td>Si5351 CLK2</td><td>thin coax</td><td>old PC-820 cal injection point</td><td>leave the receiver end open for now; later 1&ndash;2 pF or 47 k in series</td></tr>
