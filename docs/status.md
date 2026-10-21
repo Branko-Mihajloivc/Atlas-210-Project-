@@ -190,3 +190,4 @@ FT8 plan (2026-10-21, user runs MSHV):
 - Mic-disconnect relay on the same PTT so room noise is not transmitted with data.
 D13 wire run now (2026-10-21) from the VFO Nano to the KEY line / J4 pin 8 area, labelled "D13 CAT PTT", unconnected until the 2N7000 is fitted.
 CLK2 thin coax to be run now (VFO box open), receiver end open until the PC-820 injection point is located.
++5 V: one wire out of the VFO box towards the front / relay area for small future circuits (< 50 mA). No spare wires (no room).

@@ -74,11 +74,8 @@
         <tr><td>&mdash;</td><td>RST lead (+ optional push button to GND)</td></tr>
       </table>
       <ul>
-        <li>If no sync: swap green / white (colours differ between cables).</li>
-        <li><b>Upload:</b> start upload, then short RST to GND for &frac12; s.<br>
-            Power cycling only works if the radio stays off until the Nano POW LED is fully out (TTL line back-feeds the Nano).</li>
-        <li>Same procedure for the VariBeam Nano.</li>
-        <li>Never plug the Nano USB in while the TTL cable is connected.</li>
+        <li>No sync: swap green / white. <b>Upload:</b> start it, then RST to GND for &frac12; s (VariBeam Nano the same).</li>
+        <li>Power cycle only with the POW LED fully out (TTL back-feeds the Nano). Never USB and TTL at the same time.</li>
       </ul>
 
       <h2>Free Nano pins &amp; plan <span class="tag">proposal</span></h2>
@@ -91,6 +88,7 @@
         <tr><td>D13</td><td>free</td><td>CAT PTT &rarr; 2N7000 (wire run)</td></tr>
         <tr><td>A6</td><td>free (analog)</td><td>STEP / MODE / MENU ladder</td></tr>
         <tr><td>A7</td><td>free (analog)</td><td>S3 position: CW / CAL sense</td></tr>
+        <tr><td>+5 V</td><td>LCD, pot</td><td>+ 1 wire out to the front (&lt; 50 mA)</td></tr>
       </table>
       <div class="note">Used: D2/D3 encoder, D7&ndash;D12 LCD, A0/A1 S-meter, A3 band, A4/A5 I&sup2;C Si5351. <b>A2 TX</b> (LOW = TX): KEY line &rarr; 1N4148 (band to key line) &rarr; A2.<br><b>Sense inputs:</b> GND-side switch + 1N4148, or 22 k / 10 k from +12 V. Parts at the <b>source end</b> (wires to the Nano carry &le; 5 V). Never raw +13 V on a pin.</div>
     </div>
