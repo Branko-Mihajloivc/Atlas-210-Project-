@@ -180,3 +180,4 @@ External adapter: adapter RX -> pin 2, adapter TX -> pin 3, GND -> pin 4, DTR ->
 J4 final: 5 audio in (PC->TX), 6 audio GND PC side floating, 7 audio out (RX->PC), 8 PTT.
 J4 pin 8 PTT: white wire (Atlas KEY line colour) to the KEY line (mic PTT / PC-100 pin 20), NOT the T line (+13 V TX supply output).
 ATT/PRE relays: Finder 30.22.7.012 (DPDT, 12 V, 720 ohm / 16 mA, AgNi + 5 um Au contacts) - suitable, 2 needed.
+Next VFO upload PREPARED 2026-10-21 (commit 1069026, compiled, not uploaded): spur fix, MBL600 decoder, CW carrier shift. CW_SENSE_FITTED = 0 until the A7 network is wired. Previous sketch kept in git history.
