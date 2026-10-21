@@ -15,8 +15,17 @@
 //  - S-meter bar stays inside the 16 columns; debug output throttled to 2 lines/s.
 //  - S-meter reads the bridge differentially: A0 = PC-100 pin 16 (reference), A1 = pin 15 (signal),
 //    32x averaged, fast attack / slow decay, calibrated with the smeterCalMv/smeterCalDb table.
+//
+// 2026-10:
+//  - Si5351 spur fix: CLK0 (LO) on PLLA with an even integer output divider (fixed per band, the PLL
+//    is tuned instead), CLK1 (BFO) on its own PLLB with an even integer divider. Before, both ran from
+//    PLLA at a fixed 800 MHz with fractional dividers, which gave narrow birdies at fixed dial points.
+//  - Own quadrature decoder for the MBL600 (counts every edge, one step per detent, re-aligns when
+//    the knob rests). The Rotary library lost one click on every change of direction.
+//  - CW: the S3 CW position is sensed on A7 (CW_SENSE_FITTED). In CW the carrier (CLK1) moves
+//    CW_OFFSET_HZ into the crystal filter passband, like the original PC-500 did on +CW. CLK0 stays,
+//    so the carrier comes out 800 Hz above the dial on USB bands and below on LSB bands (as the Atlas).
 
-#include <Rotary.h>
 #include <si5351.h>
 #include <Wire.h>
 #include <LiquidCrystal.h>
@@ -49,6 +58,23 @@ byte bar1[8] = {B10000, B11000, B11100, B11110, B11110, B11100, B11000, B10000};
 #define SMETER_REF_IN A0                    // PC-100 pin 16: S meter bridge reference (ZERO pot R222)
 // Both through 10k in series + 100nF to GND at the radio end; 1k between pin 15 and 16 replaces the
 // removed meter. Never connect to the meter / RL101 side (+13 V on TX).
+
+// S3 position on A7: +CW -> 1N4148 -> 22k -> A7, CAL line -> 1N4148 -> 47k -> A7, 10k A7 -> GND.
+// CW about 3.8 V, CAL about 2.1 V, REC / TRANS 0 V. Set CW_SENSE_FITTED 0 while the network is not
+// wired: an open A7 floats and would switch CW on and off at random.
+#define CW_SENSE_FITTED  0                // set to 1 once the A7 network is wired
+#define S3_SENSE_IN      A7
+#define S3_CW_MIN_RAW    620                // above = CW (3.8 V = 778)
+#define S3_CAL_MIN_RAW   300                // above = CAL (2.1 V = 430)
+#define CW_OFFSET_HZ     800                // carrier shift in CW, into the filter passband (5520.3-5523.0 kHz)
+
+// MBL600 encoder: edges per detent (4 = one full quadrature cycle per click, 2 = half cycle)
+#define ENC_EDGES_PER_STEP 4
+#define ENC_REST_MS        60               // no edge for this long = knob rests in a detent
+
+// Si5351 VCO limits used for the integer divider choice
+#define VCO_MAX_HZ       900000000ULL
+#define VCO_MIN_HZ       600000000ULL
 
 // S meter calibration table: "sig=" value (mV of A1 - A0) -> dB above S0 (dB = dBm + 127, S9 = -73 dBm = 54 dB).
 // Measured 2026-09-29 on 14.100 MHz, dial 14.099.0 (1 kHz tone), basic tinySA carrier into the antenna
@@ -88,9 +114,16 @@ const int rs = 7, en = 8, d4 = 9, d5 = 10, d6 = 11, d7 = 12;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 Si5351 si5351;
-Rotary r = Rotary(ENCODER_A, ENCODER_B);
 
 volatile int8_t encoderSteps = 0;           // written by the encoder ISR, taken by loop()
+volatile int8_t encAcc = 0;                 // edges counted since the last step
+volatile uint8_t encState = 0;              // last (B << 1) | A
+volatile unsigned long encLastEdge = 0;
+
+bool cwMode = false;                        // S3 in CW: carrier shifted into the passband
+bool calMode = false;                       // S3 in CAL (for later: CLK2 calibrator)
+uint16_t s3Raw = 0;
+uint8_t loDivider = 0;                      // CLK0 output divider in use (even integer)
 
 uint32_t vfo = 10000000UL;                  // displayed frequency in Hz
 uint32_t bfo = 552000000UL;                 // BFO in 0.01 Hz
@@ -305,21 +338,89 @@ void updateBand()
 /* Interrupt service routine for      */
 /* encoder - only counts the steps    */
 /**************************************/
+// Quadrature decoder: every valid edge is +1 / -1, ENC_EDGES_PER_STEP edges = one step.
+// Index = (old state << 2) | new state, state = (B << 1) | A. CW (as with the Rotary library
+// before) is the sequence 11 -> 01 -> 00 -> 10 -> 11.
+const int8_t encTable[16] = {0, -1, 1, 0, 1, 0, 0, -1, -1, 0, 0, 1, 0, 1, -1, 0};
+
+uint8_t readEncoderPins()
+{
+    uint8_t p = PIND;                       // D2 = B (PD2), D3 = A (PD3)
+    return (((p >> 2) & 1) << 1) | ((p >> 3) & 1);
+}
+
 ISR(PCINT2_vect) {
-    unsigned char result = r.process();
-    if (result == DIR_CW && encoderSteps < 100)
-        encoderSteps++;
-    else if (result == DIR_CCW && encoderSteps > -100)
-        encoderSteps--;
+    uint8_t s = readEncoderPins();
+    int8_t d = encTable[(encState << 2) | s];
+    encState = s;
+    if (d == 0)
+        return;
+    encLastEdge = millis();
+    encAcc += d;
+    if (encAcc >= ENC_EDGES_PER_STEP)
+    {
+        encAcc -= ENC_EDGES_PER_STEP;
+        if (encoderSteps < 100) encoderSteps++;
+    }
+    else if (encAcc <= -ENC_EDGES_PER_STEP)
+    {
+        encAcc += ENC_EDGES_PER_STEP;
+        if (encoderSteps > -100) encoderSteps--;
+    }
+}
+
+// Knob resting in a detent: re-align the edge count to it. A leftover of half a step or more is a
+// click that was not counted (detent not where the count expected it), so it is counted now.
+void encoderRest()
+{
+    noInterrupts();
+    if (encAcc != 0 && millis() - encLastEdge > ENC_REST_MS)
+    {
+        if (encAcc >= ENC_EDGES_PER_STEP / 2 && encoderSteps < 100) encoderSteps++;
+        else if (encAcc <= -ENC_EDGES_PER_STEP / 2 && encoderSteps > -100) encoderSteps--;
+        encAcc = 0;
+    }
+    interrupts();
 }
 
 int8_t takeEncoderSteps()
 {
+    encoderRest();
     noInterrupts();
     int8_t s = encoderSteps;
     encoderSteps = 0;
     interrupts();
     return s;
+}
+
+/**************************************/
+/* S3 position (CW / CAL) on A7       */
+/**************************************/
+void updateS3()
+{
+#if CW_SENSE_FITTED
+    static uint8_t cwCount = 0;
+    static unsigned long lastS3 = 0;
+    if (millis() - lastS3 < 20)
+        return;
+    lastS3 = millis();
+    analogRead(S3_SENSE_IN);                // dummy read after switching the ADC channel
+    s3Raw = analogRead(S3_SENSE_IN);
+    bool cw = s3Raw >= S3_CW_MIN_RAW;
+    calMode = !cw && s3Raw >= S3_CAL_MIN_RAW;
+    // must read the same 3 times in a row before CW mode changes
+    if (cw != cwMode)
+    {
+        if (++cwCount >= 3)
+        {
+            cwMode = cw;
+            cwCount = 0;
+            changed_f = true;
+        }
+    }
+    else
+        cwCount = 0;
+#endif
 }
 
 /**************************************/
@@ -350,6 +451,21 @@ void tune(int8_t steps)
 /**************************************/
 /* Program the Si5351                 */
 /**************************************/
+// Largest even divider that keeps the VCO at or below VCO_MAX_HZ for the highest LO of the band.
+// Fixed per band, so tuning only moves the PLL and never jumps between dividers.
+uint8_t bandLoDivider(uint8_t b)
+{
+    uint32_t bfoHz = bfo / 100;
+    uint32_t loMax = band[b].ifPositive ? band[b].maxFreq + bfoHz + 10000UL
+                                        : band[b].maxFreq - bfoHz + 10000UL;   // +10 kHz for RIT
+    uint32_t d = (uint32_t)(VCO_MAX_HZ / loMax);
+    if (d & 1) d--;
+    return (uint8_t)constrain(d, 6, 254);
+}
+
+uint8_t lastBfoDivider = 0;
+uint32_t lastBfoSet = 0;
+
 void updateSi5351()
 {
     int32_t rf = (int32_t)vfo;
@@ -362,8 +478,28 @@ void updateSi5351()
     else
         clk0 -= bfo;
 
-    si5351.set_freq(clk0, SI5351_CLK0);
-    si5351.set_freq(bfo, SI5351_CLK1);
+    // LO: even integer divider on PLLA, the PLL follows the tuning
+    uint8_t d = bandLoDivider(currentBand);
+    bool newDivider = (d != loDivider);
+    loDivider = d;
+    si5351.set_freq_manual(clk0, clk0 * d, SI5351_CLK0);
+    si5351.set_int(SI5351_CLK0, 1);
+    if (newDivider)
+        si5351.pll_reset(SI5351_PLLA);
+
+    // BFO / carrier: own PLLB, even integer divider. In CW the carrier moves into the passband.
+    uint64_t clk1 = bfo + (cwMode ? (uint64_t)CW_OFFSET_HZ * SI5351_FREQ_MULT : 0);
+    if (clk1 != lastBfoSet)
+    {
+        uint32_t dB = (uint32_t)(VCO_MAX_HZ * SI5351_FREQ_MULT / clk1);
+        if (dB & 1) dB--;
+        si5351.set_freq_manual(clk1, clk1 * dB, SI5351_CLK1);
+        si5351.set_int(SI5351_CLK1, 1);
+        if (dB != lastBfoDivider)
+            si5351.pll_reset(SI5351_PLLB);
+        lastBfoDivider = dB;
+        lastBfoSet = clk1;
+    }
 }
 
 /*****************************/
@@ -497,7 +633,7 @@ void display_frequency()
 {
     uint32_t f = vfo;
     lcd.setCursor(0, 0);
-    lcd.print(F("VFO:"));
+    lcd.print(cwMode ? F("CW: ") : F("VFO:"));
     uint16_t mhz = f / 1000000UL;
     if (mhz < 10)
         lcd.print(' ');
@@ -597,7 +733,8 @@ void runSetupMenu()
             {
                 corr = constrain(corr + (int32_t)s * (int32_t)radix, -300000L, 300000L);
                 si5351.set_correction(corr, SI5351_PLL_INPUT_XO);
-                si5351.set_pll(SI5351_PLL_FIXED, SI5351_PLLA);
+                lastBfoSet = 0;             // both PLLs must be calculated again
+                loDivider = 0;
             }
             updateSi5351();                 // hear the change live
             redraw = true;
@@ -697,11 +834,16 @@ void setup()
         delay(2000);
     }
     si5351.set_correction((int32_t)settings.fcorrection * 10L, SI5351_PLL_INPUT_XO);
-    si5351.set_pll(SI5351_PLL_FIXED, SI5351_PLLA);
+    si5351.set_ms_source(SI5351_CLK0, SI5351_PLLA);   // LO
+    si5351.set_ms_source(SI5351_CLK1, SI5351_PLLB);   // BFO / carrier, own PLL
+    si5351.output_enable(SI5351_CLK2, 0);
     si5351.drive_strength(SI5351_CLK0, SI5351_DRIVE_2MA); //you can set this to 2MA, 4MA, 6MA or 8MA
     si5351.drive_strength(SI5351_CLK1, SI5351_DRIVE_2MA); //be careful though - measure into 50ohms
                                                           //(8 mA tested 2026-09-28: no change in audio/AGC level)
 
+    pinMode(ENCODER_A, INPUT_PULLUP);
+    pinMode(ENCODER_B, INPUT_PULLUP);
+    encState = readEncoderPins();
     PCICR |= (1 << PCIE2);           // Enable pin change interrupt for the encoder
     PCMSK2 |= (1 << PCINT18) | (1 << PCINT19);
     sei();
@@ -737,6 +879,7 @@ void loop()
     }
 
     updateBand();
+    updateS3();
     tune(takeEncoderSteps());
 
     // I2C timeout happened: program the Si5351 again
@@ -744,6 +887,8 @@ void loop()
     {
         Wire.clearWireTimeoutFlag();
         i2cTimeouts++;
+        lastBfoSet = 0;              // program both outputs again
+        loDivider = 0;
         changed_f = true;
     }
 
@@ -788,7 +933,12 @@ void loop()
         Serial.print(F(" tx="));
         Serial.print(txon);
         Serial.print(F(" i2cTimeouts="));
-        Serial.println(i2cTimeouts);
+        Serial.print(i2cTimeouts);
+        Serial.print(F(" A7="));
+        Serial.print(s3Raw);
+        Serial.print(cwMode ? F(" CW") : (calMode ? F(" CAL") : F("")));
+        Serial.print(F(" loDiv="));
+        Serial.println(loDivider);
     }
 #endif
 }
