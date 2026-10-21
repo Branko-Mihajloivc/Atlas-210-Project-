@@ -182,3 +182,9 @@ J4 pin 8 PTT: white wire (Atlas KEY line colour) to the KEY line (mic PTT / PC-1
 ATT/PRE relays: Finder 30.22.7.012 (DPDT, 12 V, 720 ohm / 16 mA, AgNi + 5 um Au contacts) - suitable, 2 needed.
 Next VFO upload PREPARED 2026-10-21 (commit 1069026, compiled, not uploaded): spur fix, MBL600 decoder, CW carrier shift. CW_SENSE_FITTED = 0 until the A7 network is wired. Previous sketch kept in git history.
 A2 TX sense seems unconnected (to check). Plan: KEY line -> 1N4148 (band to key line) -> A2, INPUT_PULLUP, LOW = TX.
+FT8 plan (2026-10-21, user runs MSHV):
+- RX audio to the PC (J4 pin 7) taken BEFORE the VariBeam (PC-300 pin 22) -> full RX bandwidth, independent of DSP / volume.
+- PTT step A (now): PC grounds J4 pin 8 (KEY line) - USB-TTL adapter RTS via a small NPN/opto in the plug, or a
+  sound-card interface with PTT out. Use RTS for PTT, never DTR (DTR resets the Nano via the RST cap).
+- PTT step B (later, with CAT): CAT "TX" command -> VFO Nano D13 -> 2N7000 pulls the KEY line low. A and B can coexist.
+- Mic-disconnect relay on the same PTT so room noise is not transmitted with data.
