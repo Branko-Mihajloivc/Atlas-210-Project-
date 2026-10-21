@@ -1,5 +1,6 @@
 """Builds docs/controls_wiring.html: one landscape page, VFO Nano buttons / rockers / relays / sense wires."""
-out = r'C:\Users\YT3CT\Desktop\Atlas 210 Project\docs\controls_wiring.html'
+import os
+out = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'controls_wiring.html')
 E = []
 
 
