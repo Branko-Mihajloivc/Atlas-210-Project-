@@ -84,13 +84,13 @@
       <h2>Free Nano pins &amp; plan <span class="tag">proposal</span></h2>
       <table>
         <tr><th>Pin</th><th>Now</th><th>Plan</th></tr>
-        <tr><td>D0 / D1</td><td>Serial</td><td>TTL leads</td></tr>
+        <tr><td>D0 / D1</td><td>Serial</td><td>TTL / J4 serial</td></tr>
         <tr><td>D4</td><td>free</td><td>AGC fast switch sense</td></tr>
         <tr><td>D5</td><td>free</td><td>ATT relay sense</td></tr>
         <tr><td>D6</td><td>STEP button</td><td>PRE relay sense (STEP &rarr; A6)</td></tr>
-        <tr><td>D13</td><td>free (LED)</td><td>CAT PTT out &rarr; 2N7000 at the KEY line (wire run now)</td></tr>
-        <tr><td>A6</td><td>free (analog only)</td><td>STEP / MODE / MENU ladder</td></tr>
-        <tr><td>A7</td><td>free (analog only)</td><td>S3 position: CW / CAL sense</td></tr>
+        <tr><td>D13</td><td>free</td><td>CAT PTT &rarr; 2N7000 (wire run)</td></tr>
+        <tr><td>A6</td><td>free (analog)</td><td>STEP / MODE / MENU ladder</td></tr>
+        <tr><td>A7</td><td>free (analog)</td><td>S3 position: CW / CAL sense</td></tr>
       </table>
       <div class="note">Used: D2/D3 encoder, D7&ndash;D12 LCD, A0/A1 S-meter, A3 band, A4/A5 I&sup2;C Si5351. <b>A2 TX</b> (LOW = TX): KEY line &rarr; 1N4148 (band to key line) &rarr; A2.<br><b>Sense inputs:</b> GND-side switch + 1N4148, or 22 k / 10 k from +12 V. Parts at the <b>source end</b> (wires to the Nano carry &le; 5 V). Never raw +13 V on a pin.</div>
     </div>
@@ -299,10 +299,9 @@
         <tr><td class="c">9</td><td>spare</td></tr>
       </table>
       <ul>
-        <li>Found: 2&ndash;3 jumper (old VFO path), 4 GND, 5 +8.5 V, 6 cut stub, 7 T line, 8 +13 V fused &mdash; remove all except the GND (check the other ends, splice junctions). Pin 1 was never wired. Then check REC / SSB TX / CW.</li>
-        <li>USB-TTL adapter outside the radio. Audio via 600:600 isolation transformers, shielded audio wires inside, away from the serial pair.</li>
-        <li>CAT PTT (later): D13 &rarr; 100 &Omega; &rarr; 2N7000 gate (100 k gate&ndash;GND), drain to KEY line, source GND &mdash; at the KEY line / pin 8 end. MSHV / WSJT-X: PTT on RTS, never DTR (DTR resets the Nano).</li>
-        <li>Serial debug output off while CAT is in use. If a CAT program resets the Nano on connect, set DTR off in its settings.</li>
+        <li>Old wires (2&ndash;3 jumper, 5 +8.5 V, 6 stub, 7 T line, 8 +13 V fused) removed, GND on 4 kept. Check REC / SSB TX / CW after.</li>
+        <li>USB-TTL adapter outside. Audio via 600:600 transformers, shielded, away from the serial pair. RX audio from PC-300 pin 22 (before the VariBeam).</li>
+        <li>PTT now: PC grounds pin 8 (adapter RTS via NPN/opto). Later CAT PTT: D13 &rarr; 100 &Omega; &rarr; 2N7000 (100 k G&ndash;S), drain to KEY line. PTT on RTS, never DTR (resets the Nano). Debug serial off with CAT.</li>
       </ul>
     </div>
     <div>
