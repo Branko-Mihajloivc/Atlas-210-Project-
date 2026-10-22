@@ -122,33 +122,38 @@ for name, y in pins.items():
 E.append('<rect x="800" y="55" width="290" height="560" rx="8" fill="none" stroke="#777" stroke-width="1.2" stroke-dasharray="7 5"/>')
 text(945, 48, 'FRONT PANEL', 13, 'middle', True)
 
-# ---------------- 1. buttons on A6 ----------------
-text(300, 72, '1. Buttons STEP / MODE / MENU (one wire A6 + GND to the front)', 12, 'start', True)
+# ---------------- 1. buttons + MODE rocker on A6 ----------------
+text(300, 72, '1. STEP / MENU buttons + MODE rocker (one wire A6 + GND to the front)', 12, 'start', True)
 line(170, 90, 240, 90)
 res_v(240, 90, 150, '10 k pull-up (at Nano)')
 dot(240, 150)
 line(170, 150, 1000, 150)
 line(170, 230, 1060, 230)
-dot(240, 230) if False else None
 # STEP: direct
 dot(850, 150)
 button_v(850, 150, 230, 'STEP')
 dot(850, 230)
-# MODE: 2.2k
-dot(920, 150)
-button_v(920, 150, 185, 'MODE')
-res_v(920, 185, 230, '2.2 k', 8)
-dot(920, 230)
 # MENU: 4.7k
+dot(920, 150)
+button_v(920, 150, 185, 'MENU')
+res_v(920, 185, 230, '4.7 k', 8)
+dot(920, 230)
+# MODE rocker (latching, OPP = closed): 22k
 dot(990, 150)
-button_v(990, 150, 185, 'MENU')
-res_v(990, 185, 230, '4.7 k', 8)
+line(990, 150, 990, 160)
+E.append('<circle cx="990" cy="162" r="2" fill="none" stroke="#111"/>')
+E.append('<circle cx="990" cy="178" r="2" fill="none" stroke="#111"/>')
+line(990, 178, 1000, 160, 1.4)
+line(990, 180, 990, 185)
+text(990, 144, 'MODE', 11, 'middle', True)
+text(1004, 176, 'OPP', 9)
+res_v(990, 185, 230, '22 k', 8)
 dot(990, 230)
 # 100 nF
 line(1000, 150, 1050, 150)
 cap_v(1050, 150, 230, '100 nF')
-text(560, 142, 'A6 wire', 11, 'middle')
-text(560, 222, 'GND wire', 11, 'middle')
+text(560, 142, 'A6 wire (green)', 11, 'middle')
+text(560, 222, 'GND wire (twisted with green)', 11, 'middle')
 
 # ---------------- 2. ATT / NORM / PRE ----------------
 text(300, 285, '2. ATT / NORM / PRE  (relays inside, rocker at the front)', 12, 'start', True)
@@ -268,7 +273,7 @@ tr.grp td { background: #f5f5f5; font-weight: 700; }
 <div class="sub">YT3CT &middot; 2026-10 &middot; proposal &middot; diode band = cathode. Parts at the source end, plain wires to the Nano (5 V or less).</div>
 ''' + svg + '''
 <ul>
-<li>From the Nano to the front / relays: <b>A6, GND, D4, D5, D6</b>. A2 goes to the KEY line, A7 to the S3 network. The +12 V comes from the radio, never from the Nano.</li>
+<li>From the Nano to the front / relays: <b>A6, GND, D4, D5, D6</b>. A6 readings: STEP 0, MENU &asymp; 330 (285 with MODE), MODE alone &asymp; 700, nothing 1023. A2 goes to the KEY line, A7 to the S3 network. The +12 V comes from the radio, never from the Nano.</li>
 <li>D5 / D6 / A2: Nano internal pull-up, LOW = on. D6 becomes PRE sense only after STEP has moved to A6. Relay contacts (RF in / out of the &pi;-pad and preamp) are not shown.</li>
 <li>A7: CW &asymp; 3.8 V, CAL &asymp; 2.1 V, REC / TRANS 0 V. Set CW_SENSE_FITTED 1 in the sketch once this network is wired.</li>
 </ul>
@@ -284,8 +289,8 @@ tr.grp td { background: #f5f5f5; font-weight: 700; }
 <tr><td>3</td><td>D0 (RX)</td><td>white</td><td>J4 pin 3</td><td>from adapter TX</td></tr>
 <tr><td>4</td><td>GND</td><td>black</td><td>J4 pin 4</td><td>chassis / Nano GND</td></tr>
 <tr class="grp"><td colspan="5">Front panel buttons &mdash; twisted pair</td></tr>
-<tr><td>5</td><td>A6</td><td>green</td><td>STEP / MODE / MENU</td><td>10 k pull-up A6&ndash;5 V at the Nano; 0 / 2.2 k / 4.7 k + 100 nF at the buttons</td></tr>
-<tr><td>6</td><td>GND</td><td>twisted with green</td><td>buttons common</td><td>also the ATT/PRE rocker common</td></tr>
+<tr><td>5</td><td>A6</td><td>green</td><td>STEP / MENU buttons, MODE rocker</td><td>10 k pull-up A6&ndash;5 V at the Nano; STEP 0 &Omega;, MENU 4.7 k, MODE (OPP) 22 k + 100 nF at the front</td></tr>
+<tr><td>6</td><td>GND</td><td>twisted with green</td><td>buttons / MODE common</td><td>also the ATT/PRE rocker common</td></tr>
 <tr class="grp"><td colspan="5">Sense inputs (Nano only listens, 5 V or less on the wire)</td></tr>
 <tr><td>7</td><td>D5</td><td>grey</td><td>ATT relay coil low end</td><td>1N4148, band to the coil</td></tr>
 <tr><td>8</td><td>D6</td><td>red</td><td>PRE relay coil low end</td><td>1N4148, band to the coil (after STEP moved to A6)</td></tr>

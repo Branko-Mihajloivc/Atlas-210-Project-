@@ -86,7 +86,7 @@
         <tr><td>D5</td><td>free</td><td>ATT relay sense</td></tr>
         <tr><td>D6</td><td>STEP button</td><td>PRE relay sense (STEP &rarr; A6)</td></tr>
         <tr><td>D13</td><td>free</td><td>CAT PTT &rarr; NPN (wire run)</td></tr>
-        <tr><td>A6</td><td>free (analog)</td><td>STEP / MODE / MENU ladder</td></tr>
+        <tr><td>A6</td><td>free (analog)</td><td>STEP, MENU + MODE rocker</td></tr>
         <tr><td>A7</td><td>free (analog)</td><td>S3 position: CW / CAL sense</td></tr>
               </table>
       <div class="note">Used: D2/D3 encoder, D7&ndash;D12 LCD, A0/A1 S-meter, A3 band, A4/A5 I&sup2;C Si5351. <b>A2 TX</b> (LOW = TX): KEY line &rarr; 1N4148 (band to key line) &rarr; A2.<br><b>Sense inputs:</b> GND-side switch + 1N4148, or 22 k / 10 k from +12 V. Parts at the <b>source end</b> (wires to the Nano carry &le; 5 V). Never raw +13 V on a pin.</div>
@@ -96,7 +96,7 @@
   <div class="grid">
     <!-- Buttons -->
     <div>
-      <h2>3. Buttons on A6 (resistor ladder) <span class="tag">proposal</span></h2>
+      <h2>3. STEP / MENU buttons + MODE rocker on A6 <span class="tag">proposal</span></h2>
       <svg viewBox="0 0 330 150" aria-label="Button ladder on A6">
         <!-- +5V and pull-up -->
         <text x="6" y="12">+5 V</text>
@@ -104,7 +104,7 @@
         <polyline class="w" points="40,9 40,14 35,17 45,23 35,29 45,35 35,41 40,44 40,52"/>
         <text x="50" y="30">10 k pull-up</text>
         <!-- bus -->
-        <line class="w" x1="40" y1="52" x2="300" y2="52"/>
+        <line class="w" x1="40" y1="52" x2="240" y2="52"/>
         <circle class="f" cx="40" cy="52" r="2"/>
         <text x="6" y="56">A6</text>
         <line class="w" x1="20" y1="52" x2="40" y2="52"/>
@@ -124,36 +124,30 @@
           <line class="w" x1="150" y1="52" x2="150" y2="70"/>
           <line class="w" x1="150" y1="70" x2="160" y2="62"/><circle class="w" cx="150" cy="70" r="1.6"/><circle class="w" cx="150" cy="80" r="1.6"/>
           <polyline class="w" points="150,80 150,88 145,91 155,97 145,103 155,109 150,112 150,128"/>
-          <text x="158" y="102">2.2 k</text><text x="135" y="45">MODE</text>
+          <text x="158" y="102">4.7 k</text><text x="135" y="45">MENU</text>
         </g>
         <g>
           <line class="w" x1="210" y1="52" x2="210" y2="70"/>
           <line class="w" x1="210" y1="70" x2="220" y2="62"/><circle class="w" cx="210" cy="70" r="1.6"/><circle class="w" cx="210" cy="80" r="1.6"/>
           <polyline class="w" points="210,80 210,88 205,91 215,97 205,103 215,109 210,112 210,128"/>
-          <text x="218" y="102">4.7 k</text><text x="197" y="45">MENU</text>
+          <text x="218" y="102">22 k</text><text x="186" y="45">MODE rocker</text>
         </g>
-        <g>
-          <line class="w" x1="270" y1="52" x2="270" y2="70"/>
-          <line class="w" x1="270" y1="70" x2="280" y2="62"/><circle class="w" cx="270" cy="70" r="1.6"/><circle class="w" cx="270" cy="80" r="1.6"/>
-          <polyline class="w" points="270,80 270,88 265,91 275,97 265,103 275,109 270,112 270,128"/>
-          <text x="278" y="102">10 k</text><text x="254" y="45">SPARE</text>
-        </g>
+        
         <!-- ground -->
-        <line class="w" x1="40" y1="128" x2="270" y2="128"/>
+        <line class="w" x1="40" y1="128" x2="210" y2="128"/>
         <line class="w" x1="150" y1="128" x2="150" y2="136"/>
         <line class="w" x1="140" y1="136" x2="160" y2="136"/><line class="w" x1="144" y1="140" x2="156" y2="140"/><line class="w" x1="148" y1="144" x2="152" y2="144"/>
         <text x="164" y="141">GND</text>
       </svg>
       <table>
-        <tr><th>Button</th><th>R to GND</th><th class="c">ADC</th><th class="c">Accept if</th></tr>
-        <tr><td>STEP</td><td>0 &Omega; (direct)</td><td class="c">0</td><td class="c">&lt; 90</td></tr>
-        <tr><td>MODE LSB/USB</td><td>2.2 k</td><td class="c">184</td><td class="c">90&ndash;255</td></tr>
-        <tr><td>MENU</td><td>4.7 k</td><td class="c">327</td><td class="c">255&ndash;420</td></tr>
-        <tr><td>SPARE</td><td>10 k</td><td class="c">512</td><td class="c">420&ndash;770</td></tr>
-        <tr><td>none</td><td>&mdash;</td><td class="c">1023</td><td class="c">&gt; 770</td></tr>
+        <tr><th>Control</th><th>R to GND</th><th class="c">ADC</th><th class="c">Accept if</th></tr>
+        <tr><td>STEP button</td><td>0 &Omega; (direct)</td><td class="c">0</td><td class="c">&lt; 120</td></tr>
+        <tr><td>MENU button</td><td>4.7 k</td><td class="c">327 (285 with MODE)</td><td class="c">120&ndash;480</td></tr>
+        <tr><td>MODE rocker (OPP)</td><td>22 k</td><td class="c">703</td><td class="c">480&ndash;860</td></tr>
+        <tr><td>nothing</td><td>&mdash;</td><td class="c">1023</td><td class="c">&gt; 860</td></tr>
       </table>
-      <div class="note">A6/A7 have <b>no internal pull-up</b> &rarr; the external 10 k is required. One button at a time; SPARE optional. Resistors 1&nbsp;% or 5&nbsp;% both fine.</div>
-      <h2>6. MODE button &middot; S3 CW / CAL sense on A7 <span class="tag">proposal</span></h2>
+      <div class="note">A6/A7 have <b>no internal pull-up</b> &rarr; the external 10 k is required. MODE is latching (NORM / OPP like the original S1): its state is taken while no button is pressed. 5&nbsp;% resistors fine.</div>
+      <h2>6. S3 CW / CAL sense on A7 <span class="tag">proposal</span></h2>
       <svg viewBox="0 0 330 74" aria-label="CW and CAL sense on A7">
         <text x="4" y="14">+CW</text>
         <line class="w" x1="28" y1="11" x2="50" y2="11"/>
@@ -182,7 +176,7 @@
         <tr><td>CAL</td><td class="c">&asymp; 2.1 V</td><td>CLK2 calibrator on</td></tr>
         <tr><td>REC / TRANS</td><td class="c">0 V</td><td>normal</td></tr>
       </table>
-      <div class="note">MODE button = LSB/USB, software only (BFO to the other side of the crystal filter, LO follows).</div>
+      <div class="note">MODE rocker NORM / OPP = sideband as the Atlas S1: software only (BFO to the other side of the crystal filter, 5.520.0 &harr; ~5.523.3 MHz, LO follows).</div>
     </div>
 
     <!-- ATT + AGC -->
