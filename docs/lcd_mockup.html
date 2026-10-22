@@ -43,6 +43,7 @@
       <button id="bTx"></button>
       <button id="bScale"></button>
       <button id="bCase"></button>
+      <button id="bLit"></button>
     </div>
     <div class="label">The 8 custom character slots right now</div>
     <canvas id="slots" width="640" height="110"></canvas>
@@ -50,7 +51,8 @@
   <ul>
     <li>Flags can use the LCD's built-in capitals or lowercase letters (no custom slots either way).</li>
     <li>Row 1: mode (USB / LSB / TX), frequency, <code>!</code> after an I²C fault, AGC F / S.</li>
-    <li>Row 2: PRE / ATT / blank, 9 S-meter fields (S1…S9), then +10…+40.</li>
+    <li>Row 2: PRE / ATT / blank, 9 S-meter fields (S1…S9), then +10…+40. On TX the meter shows the PA current (original Atlas meter function) with <b>PA</b> in front.</li>
+    <li>&ldquo;Reached digit&rdquo; styles: inverted (bold), underline, half-fill, bars only.</li>
     <li>Odd fields show a small 3×6 digit; when the signal reaches the field it turns into the same digit cut out of a lit block. Even fields are bars with 3 dB half steps.</li>
     <li>Small digits on both lit and unlit fields: each digit appears only once on screen, so its slot is rewritten when the field changes state. 5 digit slots + bar + half bar = 7 of 8.</li>
   </ul>
@@ -61,30 +63,34 @@ const F={'0':['01110','10001','10011','10101','11001','10001','01110'],'1':['001
 const D={'1':['010','110','010','010','010','111'],'3':['111','001','011','001','001','111'],'5':['111','100','111','001','001','111'],'7':['111','001','001','010','010','010'],'9':['111','101','101','111','001','111']};
 const small=d=>['00000',...D[d].map(r=>'0'+r+'0'),'00000'];
 const inv=d=>['11111',...D[d].map(r=>'1'+r.split('').map(c=>c==='1'?'0':'1').join('')+'1'),'11111'];
+const under=d=>{const g=small(d);g[7]='11111';return g;};
+const halfFill=d=>{const r=D[d];return ['00000','0'+r[0]+'0','0'+r[1]+'0','0'+r[2]+'0',...r.slice(3).map(x=>'1'+x.split('').map(c=>c==='1'?'0':'1').join('')+'1'),'11111'];};
+const lits=['inverted','underline','half-fill','bars only'];
+const litFn=[inv,under,halfFill,small];
 const bar=['01010','01010','01010','01010','01010','01010','01010','00000'];
 const half=['01000','01000','01000','01000','01000','01000','01000','00000'];
 const tick=['00000','00000','00000','00000','00000','00000','00100','00000'];
 const blank=['00000','00000','00000','00000','00000','00000','00000','00000'];
 const scales=['small digits','LCD digits','ticks','blank'];
-const st={mode:'USB',fe:'PRE',agc:'F',tx:false,fault:false,scale:0,lower:false};
+const st={mode:'USB',fe:'PRE',agc:'F',tx:false,fault:false,scale:0,lower:false,lit:1};
 const cs=t=>st.lower?t.toLowerCase():t;
 const ON='#1c2608',OFF='#a9c93a',BG='#b9d64a';
 const $=id=>document.getElementById(id);
 function g(c){return typeof c==='string'?(F[c]||F[' ']).concat(['00000']):c;}
 function sig(){const v=+$('sig').value;return v<=18?{h:v,over:-1}:{h:18,over:(v-18)*10};}
 function build(){
-  const r1=[],r2=[],slots=[null,null,null,null,null,bar,half,null],s=st.tx?{h:0,over:-1}:sig();
+  const r1=[],r2=[],slots=[null,null,null,null,null,bar,half,null],s=sig();
   for(const c of cs(st.tx?'TX ':st.mode))r1.push(c);
   r1.push(' ');
   for(const c of (st.mode==='USB'?'14.100.000':' 7.169.100'))r1.push(c);
   r1.push(st.fault?'!':' ',cs(st.agc));
-  for(const c of cs(st.fe==='OFF'?'   ':st.fe))r2.push(c);
+  for(const c of cs(st.tx?'PA ':(st.fe==='OFF'?'   ':st.fe)))r2.push(c);
   r2.push(' ');
   for(let i=0;i<9;i++){
     const h=s.h-2*i,d=String(i+1);
     if(i%2===0){
       let gl;
-      if(h>=2)gl=inv(d);
+      if(h>=2)gl=litFn[st.lit](d);
       else if(st.scale===0)gl=small(d);
       else if(st.scale===1)gl=d;
       else if(st.scale===2){gl=tick;slots[7]=tick;}
@@ -115,6 +121,7 @@ function draw(){
   $('bTx').textContent='TX: '+(st.tx?'on':'off');
   $('bScale').textContent='Unlit scale: '+scales[st.scale];
   $('bCase').textContent='Flags: '+(st.lower?'lowercase':'capitals');
+  $('bLit').textContent='Reached digit: '+lits[st.lit];
 }
 $('sig').oninput=draw;
 $('bMode').onclick=()=>{st.mode=st.mode==='USB'?'LSB':'USB';draw();};
@@ -122,6 +129,7 @@ $('bFe').onclick=()=>{st.fe={PRE:'OFF',OFF:'ATT',ATT:'PRE'}[st.fe];draw();};
 $('bAgc').onclick=()=>{st.agc=st.agc==='F'?'S':'F';draw();};
 $('bTx').onclick=()=>{st.tx=!st.tx;draw();};
 $('bCase').onclick=()=>{st.lower=!st.lower;draw();};
+$('bLit').onclick=()=>{st.lit=(st.lit+1)%lits.length;draw();};
 $('bScale').onclick=()=>{st.scale=(st.scale+1)%scales.length;draw();};
 draw();
 </script>
