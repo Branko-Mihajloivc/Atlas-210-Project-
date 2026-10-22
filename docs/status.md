@@ -190,6 +190,6 @@ FT8 plan (2026-10-21, user runs MSHV):
 - Mic-disconnect relay on the same PTT so room noise is not transmitted with data.
 D13 wire run now (2026-10-21) from the VFO Nano to the KEY line / J4 pin 8 area, labelled "D13 CAT PTT", unconnected until the 2N7000 is fitted.
 CLK2 thin coax to be run now (VFO box open), receiver end open until the PC-820 injection point is located.
-+5 V: one wire out of the VFO box towards the front / relay area for small future circuits (< 50 mA). No spare wires (no room).
++5 V wire out: dropped (no room).
 KEY line current measured 2.1 mA -> CAT PTT with any small NPN (BC547): D13 -> 4.7 k -> base, 47 k B-E, collector to KEY line, emitter GND.
-Wired 2026-10-22: A6 green (10 k pull-up at Nano), A7 blue -> network (orange CAL, white/black +CW), A2 white (diode at Nano end), D4 orange, D5 grey, D6 red, D13 white/red, CLK2 coax. Buttons GND and +5 V out: to confirm.
+Wired 2026-10-22: A6 green (10 k pull-up at Nano), A7 blue -> network (orange CAL, white/black +CW), A2 white (diode at Nano end), D4 orange, D5 grey, D6 red, D13 white/red, CLK2 coax. Buttons GND twisted with the green A6 wire; no +5 V wire.
