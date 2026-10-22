@@ -142,6 +142,7 @@ unsigned long lastTuneMillis = 0;
 unsigned long lastBandSample = 0;
 unsigned long lastSmeter = 0;
 unsigned long lastDebug = 0;
+bool debugStream = false;                   // continuous status lines ('D' over serial)
 
 uint16_t bandRaw = 0;
 uint16_t smeterMv = 0;                      // pin 15
@@ -952,40 +953,55 @@ void loop()
         saveSettings();
 
 #if DEBUG_SERIAL
-    if (millis() - lastDebug >= DEBUG_PERIOD_MS)
+    // Serial is quiet unless asked: the status line runs out through J4 and the USB cable and is
+    // heard as ticking on 15 / 10 m. '?' = one status line, 'D' = continuous lines on / off.
+    while (Serial.available())
+    {
+        char c = Serial.read();
+        if (c == '?')
+            printStatus();
+        else if (c == 'D' || c == 'd')
+            debugStream = !debugStream;
+    }
+    if (debugStream && millis() - lastDebug >= DEBUG_PERIOD_MS)
     {
         lastDebug = millis();
-        Serial.print(F("band="));
-        Serial.print(band[currentBand].name);
-        Serial.print(F(" A3="));
-        Serial.print(bandRaw);
-        Serial.print(F(" A0mV="));
-        Serial.print(smeterRefMv);
-        Serial.print(F(" A1mV="));
-        Serial.print(smeterMv);
-        Serial.print(F(" sig="));
-        Serial.print(smeterDiffMv);
-        Serial.print(F(" dB="));
-        Serial.print(smeterDb(smeterShownMv));
-        Serial.print(F(" vfo="));
-        Serial.print(vfo);
-        Serial.print(F(" rit="));
-        Serial.print(rit ? rit_offset : 0);
-        Serial.print(F(" tx="));
-        Serial.print(txon);
-        Serial.print(F(" i2cTimeouts="));
-        Serial.print(i2cTimeouts);
-        Serial.print(F(" A7="));
-        Serial.print(s3Raw);
-        Serial.print(cwMode ? F(" CW") : (calMode ? F(" CAL") : F("")));
-        Serial.print(F(" loDiv="));
-        Serial.print(loDivider);
-        Serial.print(F(" score="));
-        Serial.print(spurScore((uint64_t)((band[currentBand].ifPositive ? vfo + bfo / 100 : vfo - bfo / 100)) * 100ULL, loDivider));
-        Serial.print(F(" bfoDiv="));
-        Serial.println(lastBfoDivider);
+        printStatus();
     }
 #endif
+}
+
+void printStatus()
+{
+    Serial.print(F("band="));
+    Serial.print(band[currentBand].name);
+    Serial.print(F(" A3="));
+    Serial.print(bandRaw);
+    Serial.print(F(" A0mV="));
+    Serial.print(smeterRefMv);
+    Serial.print(F(" A1mV="));
+    Serial.print(smeterMv);
+    Serial.print(F(" sig="));
+    Serial.print(smeterDiffMv);
+    Serial.print(F(" dB="));
+    Serial.print(smeterDb(smeterShownMv));
+    Serial.print(F(" vfo="));
+    Serial.print(vfo);
+    Serial.print(F(" rit="));
+    Serial.print(rit ? rit_offset : 0);
+    Serial.print(F(" tx="));
+    Serial.print(txon);
+    Serial.print(F(" i2cTimeouts="));
+    Serial.print(i2cTimeouts);
+    Serial.print(F(" A7="));
+    Serial.print(s3Raw);
+    Serial.print(cwMode ? F(" CW") : (calMode ? F(" CAL") : F("")));
+    Serial.print(F(" loDiv="));
+    Serial.print(loDivider);
+    Serial.print(F(" score="));
+    Serial.print(spurScore((uint64_t)((band[currentBand].ifPositive ? vfo + bfo / 100 : vfo - bfo / 100)) * 100ULL, loDivider));
+    Serial.print(F(" bfoDiv="));
+    Serial.println(lastBfoDivider);
 }
 
 void clickEvent()
