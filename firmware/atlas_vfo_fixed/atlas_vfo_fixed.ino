@@ -17,9 +17,11 @@
 //    32x averaged, fast attack / slow decay, calibrated with the smeterCalMv/smeterCalDb table.
 //
 // 2026-10:
-//  - Si5351 spur fix: CLK0 (LO) on PLLA with an even integer output divider (fixed per band, the PLL
-//    is tuned instead), CLK1 (BFO) on its own PLLB with an even integer divider. Before, both ran from
-//    PLLA at a fixed 800 MHz with fractional dividers, which gave narrow birdies at fixed dial points.
+//  - Si5351 spur fix: CLK0 (LO) on PLLA with an even integer output divider (the PLL is tuned),
+//    CLK1 (BFO) on its own PLLB with an even integer divider. The divider is chosen so the VCO stays
+//    away from whole multiples / simple fractions of the crystal (PLL spur points). Before, both ran
+//    from PLLA at a fixed 800 MHz (= 32.0 x crystal) with fractional dividers -> narrow birdies.
+//    Same divider while tuning = only the PLL registers are written (less I2C noise per step).
 //  - Own quadrature decoder for the MBL600 (counts every edge, one step per detent, re-aligns when
 //    the knob rests). The Rotary library lost one click on every change of direction.
 //  - CW: the S3 CW position is sensed on A7 (CW_SENSE_FITTED). In CW the carrier (CLK1) moves
@@ -123,7 +125,7 @@ volatile unsigned long encLastEdge = 0;
 bool cwMode = false;                        // S3 in CW: carrier shifted into the passband
 bool calMode = false;                       // S3 in CAL (for later: CLK2 calibrator)
 uint16_t s3Raw = 0;
-uint8_t loDivider = 0;                      // CLK0 output divider in use (even integer)
+uint16_t loDivider = 0;                     // CLK0 output divider in use (even integer)
 
 uint32_t vfo = 10000000UL;                  // displayed frequency in Hz
 uint32_t bfo = 552000000UL;                 // BFO in 0.01 Hz
@@ -451,19 +453,53 @@ void tune(int8_t steps)
 /**************************************/
 /* Program the Si5351                 */
 /**************************************/
-// Largest even divider that keeps the VCO at or below VCO_MAX_HZ for the highest LO of the band.
-// Fixed per band, so tuning only moves the PLL and never jumps between dividers.
-uint8_t bandLoDivider(uint8_t b)
+// PLL spurs: the Si5351 PLL makes strong spurs when its VCO is close to a whole multiple of the
+// crystal or to a simple fraction of it (1/4, 1/3, 1/2, 2/3, 3/4). The spur offset at the output is
+// about |fraction - p/q| * crystal / (q * divider). So every even output divider that keeps the VCO
+// in range is scored by its distance from those points and the best one is used. The divider is
+// kept while it is still good enough (hysteresis), so tuning normally only moves the PLL.
+#define SPUR_KEEP_SCORE   150               // keep the divider while the score is at least this
+int32_t corrPpb = 0;                        // crystal correction in ppb (set in setup / menu)
+
+// Score in 1/10000: min over p/q (q <= 4) of |frac(VCO / xtal) - p/q| / q. Higher = cleaner.
+uint16_t spurScore(uint64_t f100, uint16_t d)
 {
-    uint32_t bfoHz = bfo / 100;
-    uint32_t loMax = band[b].ifPositive ? band[b].maxFreq + bfoHz + 10000UL
-                                        : band[b].maxFreq - bfoHz + 10000UL;   // +10 kHz for RIT
-    uint32_t d = (uint32_t)(VCO_MAX_HZ / loMax);
-    if (d & 1) d--;
-    return (uint8_t)constrain(d, 6, 254);
+    uint64_t ref100 = 2500000000ULL + (uint64_t)((int64_t)2500000000LL * corrPpb / 1000000000LL);
+    uint64_t vco100 = f100 * d;
+    uint32_t fr = (uint32_t)(((vco100 % ref100) * 10000ULL) / ref100);   // 0..9999
+    static const uint8_t qs[7] = {1, 4, 3, 2, 3, 4, 1};
+    static const uint16_t ps[7] = {0, 2500, 3333, 5000, 6667, 7500, 10000};
+    uint16_t best = 10000;
+    for (uint8_t i = 0; i < 7; i++)
+    {
+        uint16_t dist = (fr > ps[i]) ? fr - ps[i] : ps[i] - fr;
+        uint16_t s = dist / qs[i];
+        if (s < best)
+            best = s;
+    }
+    return best;
 }
 
-uint8_t lastBfoDivider = 0;
+// Even divider for output f100 (in 0.01 Hz): keep 'current' if it is still in range and clean
+// enough, otherwise the cleanest one in range.
+uint16_t chooseDivider(uint64_t f100, uint16_t current)
+{
+    uint32_t f = (uint32_t)(f100 / 100);
+    uint16_t dMin = (uint16_t)((VCO_MIN_HZ + f - 1) / f);
+    uint16_t dMax = (uint16_t)(VCO_MAX_HZ / f);
+    if (dMin & 1) dMin++;
+    if (current >= dMin && current <= dMax && !(current & 1) && spurScore(f100, current) >= SPUR_KEEP_SCORE)
+        return current;
+    uint16_t bestD = dMax & ~1, bestS = 0;
+    for (uint16_t d = dMin; d <= dMax; d += 2)
+    {
+        uint16_t s = spurScore(f100, d);
+        if (s > bestS) { bestS = s; bestD = d; }
+    }
+    return bestD;
+}
+
+uint16_t lastBfoDivider = 0;
 uint32_t lastBfoSet = 0;
 
 void updateSi5351()
@@ -478,21 +514,24 @@ void updateSi5351()
     else
         clk0 -= bfo;
 
-    // LO: even integer divider on PLLA, the PLL follows the tuning
-    uint8_t d = bandLoDivider(currentBand);
-    bool newDivider = (d != loDivider);
-    loDivider = d;
-    si5351.set_freq_manual(clk0, clk0 * d, SI5351_CLK0);
-    si5351.set_int(SI5351_CLK0, 1);
-    if (newDivider)
+    // LO: even integer divider on PLLA. Same divider = only the PLL registers are written
+    // (fewer I2C writes per tuning step = less noise while tuning).
+    uint16_t d = chooseDivider(clk0, loDivider);
+    if (d != loDivider)
+    {
+        loDivider = d;
+        si5351.set_freq_manual(clk0, clk0 * d, SI5351_CLK0);
+        si5351.set_int(SI5351_CLK0, 1);
         si5351.pll_reset(SI5351_PLLA);
+    }
+    else
+        si5351.set_pll(clk0 * d, SI5351_PLLA);
 
     // BFO / carrier: own PLLB, even integer divider. In CW the carrier moves into the passband.
     uint64_t clk1 = bfo + (cwMode ? (uint64_t)CW_OFFSET_HZ * SI5351_FREQ_MULT : 0);
     if (clk1 != lastBfoSet)
     {
-        uint32_t dB = (uint32_t)(VCO_MAX_HZ * SI5351_FREQ_MULT / clk1);
-        if (dB & 1) dB--;
+        uint16_t dB = chooseDivider(clk1, 0);
         si5351.set_freq_manual(clk1, clk1 * dB, SI5351_CLK1);
         si5351.set_int(SI5351_CLK1, 1);
         if (dB != lastBfoDivider)
@@ -733,6 +772,7 @@ void runSetupMenu()
             {
                 corr = constrain(corr + (int32_t)s * (int32_t)radix, -300000L, 300000L);
                 si5351.set_correction(corr, SI5351_PLL_INPUT_XO);
+                corrPpb = corr;
                 lastBfoSet = 0;             // both PLLs must be calculated again
                 loDivider = 0;
             }
@@ -834,6 +874,7 @@ void setup()
         delay(2000);
     }
     si5351.set_correction((int32_t)settings.fcorrection * 10L, SI5351_PLL_INPUT_XO);
+    corrPpb = (int32_t)settings.fcorrection * 10L;
     si5351.set_ms_source(SI5351_CLK0, SI5351_PLLA);   // LO
     si5351.set_ms_source(SI5351_CLK1, SI5351_PLLB);   // BFO / carrier, own PLL
     si5351.output_enable(SI5351_CLK2, 0);
@@ -938,7 +979,11 @@ void loop()
         Serial.print(s3Raw);
         Serial.print(cwMode ? F(" CW") : (calMode ? F(" CAL") : F("")));
         Serial.print(F(" loDiv="));
-        Serial.println(loDivider);
+        Serial.print(loDivider);
+        Serial.print(F(" score="));
+        Serial.print(spurScore((uint64_t)((band[currentBand].ifPositive ? vfo + bfo / 100 : vfo - bfo / 100)) * 100ULL, loDivider));
+        Serial.print(F(" bfoDiv="));
+        Serial.println(lastBfoDivider);
     }
 #endif
 }
