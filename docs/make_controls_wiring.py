@@ -284,16 +284,16 @@ tr.grp td { background: #f5f5f5; font-weight: 700; }
 <tr><td>3</td><td>D0 (RX)</td><td>white</td><td>J4 pin 3</td><td>from adapter TX</td></tr>
 <tr><td>4</td><td>GND</td><td>black</td><td>J4 pin 4</td><td>chassis / Nano GND</td></tr>
 <tr class="grp"><td colspan="5">Front panel buttons &mdash; twisted pair</td></tr>
-<tr><td>5</td><td>A6</td><td></td><td>STEP / MODE / MENU</td><td>10 k pull-up A6&ndash;5 V at the Nano; 0 / 2.2 k / 4.7 k + 100 nF at the buttons</td></tr>
+<tr><td>5</td><td>A6</td><td>green</td><td>STEP / MODE / MENU</td><td>10 k pull-up A6&ndash;5 V at the Nano; 0 / 2.2 k / 4.7 k + 100 nF at the buttons</td></tr>
 <tr><td>6</td><td>GND</td><td></td><td>buttons common</td><td>also the ATT/PRE rocker common</td></tr>
 <tr class="grp"><td colspan="5">Sense inputs (Nano only listens, 5 V or less on the wire)</td></tr>
-<tr><td>7</td><td>D5</td><td></td><td>ATT relay coil low end</td><td>1N4148, band to the coil</td></tr>
-<tr><td>8</td><td>D6</td><td></td><td>PRE relay coil low end</td><td>1N4148, band to the coil (after STEP moved to A6)</td></tr>
-<tr><td>9</td><td>D4</td><td></td><td>AGC switched +12 V</td><td>22 k series + 10 k to GND (divider at the far end)</td></tr>
-<tr><td>10</td><td>A2</td><td></td><td>KEY line</td><td>1N4148, band to the KEY line</td></tr>
-<tr><td>11</td><td>A7</td><td></td><td>S3 network</td><td>+CW &rarr; 1N4148 &rarr; 22 k, CAL &rarr; 1N4148 &rarr; 47 k, 10 k to GND</td></tr>
+<tr><td>7</td><td>D5</td><td>grey</td><td>ATT relay coil low end</td><td>1N4148, band to the coil</td></tr>
+<tr><td>8</td><td>D6</td><td>red</td><td>PRE relay coil low end</td><td>1N4148, band to the coil (after STEP moved to A6)</td></tr>
+<tr><td>9</td><td>D4</td><td>orange</td><td>AGC switched +12 V</td><td>22 k series + 10 k to GND (divider at the far end)</td></tr>
+<tr><td>10</td><td>A2</td><td>white</td><td>KEY line</td><td>1N4148 fitted <b>at the Nano end</b> (band to the KEY line), well insulated &mdash; the white wire carries +13 V</td></tr>
+<tr><td>11</td><td>A7</td><td>blue</td><td>S3 network</td><td>network &rarr; <b>orange</b> to CAL (1N4148 + 47 k), <b>white/black</b> to +CW (1N4148 + 22 k), 10 k to GND</td></tr>
 <tr class="grp"><td colspan="5">Output / supply</td></tr>
-<tr><td>12</td><td>D13</td><td></td><td>KEY line / J4 pin 8 area</td><td>CAT PTT later: 4.7 k &rarr; NPN base (BC547), 47 k B&ndash;E, collector to KEY line, emitter GND (KEY line 2.1 mA). Leave open, label it</td></tr>
+<tr><td>12</td><td>D13</td><td>white/red</td><td>KEY line / J4 pin 8 area</td><td>CAT PTT later: 4.7 k &rarr; NPN base (BC547), 47 k B&ndash;E, collector to KEY line, emitter GND (KEY line 2.1 mA). Leave open, label it</td></tr>
 <tr><td>13</td><td>+5 V</td><td></td><td>front / relay area</td><td>small future circuits, &lt; 50 mA</td></tr>
 <tr class="grp"><td colspan="5">RF</td></tr>
 <tr><td>14</td><td>Si5351 CLK2</td><td>thin coax</td><td>old PC-820 cal injection point</td><td>leave the receiver end open for now; later 1&ndash;2 pF or 47 k in series</td></tr>
