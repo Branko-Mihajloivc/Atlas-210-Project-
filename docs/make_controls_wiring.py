@@ -136,7 +136,7 @@ dot(850, 230)
 # MENU: 4.7k
 dot(920, 150)
 button_v(920, 150, 185, 'MENU')
-res_v(920, 185, 230, '4.7 k', 8)
+res_v(920, 185, 230, '2.2 k', 8)
 dot(920, 230)
 # MODE rocker (latching, OPP = closed): 22k
 dot(990, 150)
@@ -273,7 +273,7 @@ tr.grp td { background: #f5f5f5; font-weight: 700; }
 <div class="sub">YT3CT &middot; 2026-10 &middot; proposal &middot; diode band = cathode. Parts at the source end, plain wires to the Nano (5 V or less).</div>
 ''' + svg + '''
 <ul>
-<li>From the Nano to the front / relays: <b>A6, GND, D4, D5, D6</b>. A6 readings: STEP 0, MENU &asymp; 330 (285 with MODE), MODE alone &asymp; 700, nothing 1023. A2 goes to the KEY line, A7 to the S3 network. The +12 V comes from the radio, never from the Nano.</li>
+<li>From the Nano to the front / relays: <b>A6, GND, D4, D5, D6</b>. A6 readings: STEP 0, MENU &asymp; 184 (170 with MODE), MODE alone &asymp; 700, nothing 1023. A2 goes to the KEY line, A7 to the S3 network. The +12 V comes from the radio, never from the Nano.</li>
 <li>D5 / D6 / A2: Nano internal pull-up, LOW = on. D6 becomes PRE sense only after STEP has moved to A6. Relay contacts (RF in / out of the &pi;-pad and preamp) are not shown.</li>
 <li>A7: CW &asymp; 3.8 V, CAL &asymp; 2.1 V, REC / TRANS 0 V. Set CW_SENSE_FITTED 1 in the sketch once this network is wired.</li>
 </ul>
@@ -289,7 +289,7 @@ tr.grp td { background: #f5f5f5; font-weight: 700; }
 <tr><td>3</td><td>D0 (RX)</td><td>white</td><td>J4 pin 3</td><td>from adapter TX</td></tr>
 <tr><td>4</td><td>GND</td><td>black</td><td>J4 pin 4</td><td>chassis / Nano GND</td></tr>
 <tr class="grp"><td colspan="5">Front panel buttons &mdash; twisted pair</td></tr>
-<tr><td>5</td><td>A6</td><td>green</td><td>STEP / MENU buttons, MODE rocker</td><td>10 k pull-up A6&ndash;5 V at the Nano; STEP 0 &Omega;, MENU 4.7 k, MODE (OPP) 22 k + 100 nF at the front</td></tr>
+<tr><td>5</td><td>A6</td><td>green</td><td>STEP / MENU buttons, MODE rocker</td><td>10 k pull-up A6&ndash;5 V at the Nano; STEP 0 &Omega;, MENU 2.2 k, MODE (OPP) 22 k + 100 nF at the front</td></tr>
 <tr><td>6</td><td>GND</td><td>twisted with green</td><td>buttons / MODE common</td><td>also the ATT/PRE rocker common</td></tr>
 <tr class="grp"><td colspan="5">Sense inputs (Nano only listens, 5 V or less on the wire)</td></tr>
 <tr><td>7</td><td>D5</td><td>grey</td><td>ATT relay coil low end</td><td>1N4148, band to the coil</td></tr>
