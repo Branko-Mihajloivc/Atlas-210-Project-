@@ -36,6 +36,19 @@
 #define DEBUG_SERIAL 1                      // 0 = no serial output
 
 // Layout must stay identical to the 2023 sketch so the stored EEPROM data is still valid
+// Menu settings added 2026-10 (own EEPROM area at SETTINGS2_ADDR, so the 2023 block stays valid)
+#define SETTINGS2_ADDR   64
+#define SETTINGS2_MAGIC  0xA2               // change when the layout changes -> defaults are loaded
+struct settings2_t
+{
+    uint8_t magic;
+    uint16_t oppOffsetHz;                   // MODE OPP carrier shift (Atlas 5523.3 kHz crystal = 3300)
+    uint16_t cwOffsetHz;                    // CW carrier shift into the passband
+    uint32_t defaultStep;                   // tuning step at power on
+    uint8_t accel;                          // tuning acceleration 0 = off, 1 = low, 2 = high
+}
+settings2;
+
 struct settings_t
 {
     int32_t bfo_offset;                     // BFO in 0.01 Hz (552000000 = 5.520000 MHz)
@@ -518,7 +531,21 @@ void tune(int8_t steps)
     }
     else
     {
-        int32_t f = (int32_t)vfo + (int32_t)steps * (int32_t)radix;
+        // Acceleration: clicks counted per 100 ms window; fast turning multiplies the step
+        // (low: x10 above ~80 clicks/s; high: also x100 above ~250 clicks/s), max 10 kHz per click.
+        static unsigned long winStart = 0;
+        static uint8_t winCount = 0;
+        if (millis() - winStart > 100)
+        {
+            winStart = millis();
+            winCount = 0;
+        }
+        winCount = min(255, winCount + abs(steps));
+        int32_t mult = 1;
+        if (settings2.accel >= 1 && winCount > 8) mult = 10;
+        if (settings2.accel >= 2 && winCount > 25) mult = 100;
+        while (mult > 1 && (int32_t)radix * mult > 10000) mult /= 10;
+        int32_t f = (int32_t)vfo + (int32_t)steps * (int32_t)radix * mult;
         f = constrain(f, (int32_t)band[currentBand].minFreq, (int32_t)band[currentBand].maxFreq);
         vfo = (uint32_t)f;
         // reset rit offset to zero if frequency changed in non rit mode
@@ -589,7 +616,7 @@ void updateSi5351()
 
     // MODE OPP: carrier on the other side of the filter, LO follows so the dial stays right.
     // CW always uses NORM (Atlas manual: sideband selector in NORM for CW).
-    uint64_t bfoRx = bfo + ((modeOpp && !cwMode) ? (uint64_t)OPP_OFFSET_HZ * SI5351_FREQ_MULT : 0);
+    uint64_t bfoRx = bfo + ((modeOpp && !cwMode) ? (uint64_t)settings2.oppOffsetHz * SI5351_FREQ_MULT : 0);
     uint64_t clk0 = (uint64_t)rf * SI5351_FREQ_MULT;
     if (band[currentBand].ifPositive)
         clk0 += bfoRx;
@@ -610,7 +637,7 @@ void updateSi5351()
         si5351.set_pll(clk0 * d, SI5351_PLLA);
 
     // BFO / carrier: own PLLB, even integer divider. In CW the carrier moves into the passband.
-    uint64_t clk1 = bfoRx + (cwMode ? (uint64_t)CW_OFFSET_HZ * SI5351_FREQ_MULT : 0);
+    uint64_t clk1 = bfoRx + (cwMode ? (uint64_t)settings2.cwOffsetHz * SI5351_FREQ_MULT : 0);
     if (clk1 != lastBfoSet)
     {
         uint16_t dB = chooseDivider(clk1, 0);
@@ -716,7 +743,7 @@ void display_flags2()
 {
     flagsDirty = false;
     lcd.setCursor(0, 1);
-    lcd.print(attOn ? F("ATT ") : (preOn ? F("PRE ") : F("    ")));
+    lcd.print(attOn ? F("ATT ") : (preOn ? F("PRE ") : F("NOR ")));
 }
 
 // D4 / D5 / D6 read every 50 ms; a change redraws only what it affects
@@ -887,12 +914,22 @@ void vfosteps()
 }
 
 /**************************************/
-/* Setup menu (button held at power on)*/
+/* Setup menu (STEP held at power on, */
+/* or MENU held 1 s)                  */
 /*  encoder      : change value       */
-/*  click        : change step        */
-/*  double click : next item          */
-/*  hold 2 s     : save and exit      */
+/*  STEP click   : change step size   */
+/*  MENU click / STEP double: next    */
+/*  hold STEP 2 s: save and exit      */
 /**************************************/
+#define MENU_ITEMS 6
+const uint32_t stepList[] = {1, 10, 100, 1000, 10000};
+
+void saveSettings2()
+{
+    settings2.magic = SETTINGS2_MAGIC;
+    eeprom_update_block((const void*)&settings2, (void*)SETTINGS2_ADDR, sizeof(settings2));
+}
+
 void runSetupMenu()
 {
     setupmenu = true;
@@ -910,6 +947,7 @@ void runSetupMenu()
     int32_t corr = (int32_t)settings.fcorrection * 10L;   // ppb
     uint8_t item = 0;
     bool redraw = true;
+    bool menuWasDown = false;
     radix = 100;
 
     while (true)
@@ -917,18 +955,36 @@ void runSetupMenu()
         int8_t s = takeEncoderSteps();
         if (s)
         {
-            if (item == 0)
+            switch (item)
             {
-                bfoHz = constrain(bfoHz + (int32_t)s * (int32_t)radix, 1000000L, 20000000L);
-                bfo = (uint32_t)bfoHz * 100UL;
-            }
-            else
-            {
-                corr = constrain(corr + (int32_t)s * (int32_t)radix, -300000L, 300000L);
-                si5351.set_correction(corr, SI5351_PLL_INPUT_XO);
-                corrPpb = corr;
-                lastBfoSet = 0;             // both PLLs must be calculated again
-                loDivider = 0;
+                case 0:
+                    bfoHz = constrain(bfoHz + (int32_t)s * (int32_t)radix, 1000000L, 20000000L);
+                    bfo = (uint32_t)bfoHz * 100UL;
+                    break;
+                case 1:
+                    corr = constrain(corr + (int32_t)s * (int32_t)radix, -300000L, 300000L);
+                    si5351.set_correction(corr, SI5351_PLL_INPUT_XO);
+                    corrPpb = corr;
+                    lastBfoSet = 0;         // both PLLs must be calculated again
+                    loDivider = 0;
+                    break;
+                case 2:
+                    settings2.oppOffsetHz = constrain((int32_t)settings2.oppOffsetHz + (int32_t)s * (int32_t)min(radix, 1000UL), 1000L, 6000L);
+                    break;
+                case 3:
+                    settings2.cwOffsetHz = constrain((int32_t)settings2.cwOffsetHz + (int32_t)s * (int32_t)min(radix, 100UL), 300L, 1500L);
+                    break;
+                case 4:
+                {
+                    int8_t i = 0;
+                    while (i < 4 && stepList[i] != settings2.defaultStep) i++;
+                    i = constrain(i + (s > 0 ? 1 : -1), 0, 4);
+                    settings2.defaultStep = stepList[i];
+                    break;
+                }
+                case 5:
+                    settings2.accel = constrain((int8_t)settings2.accel + (s > 0 ? 1 : -1), 0, 2);
+                    break;
             }
             updateSi5351();                 // hear the change live
             redraw = true;
@@ -936,40 +992,53 @@ void runSetupMenu()
 
         int b = checkButton();
         if (b == 1) { vfosteps(); redraw = true; }
-        if (b == 2) { item = (item + 1) % 2; redraw = true; }
+        if (b == 2) { item = (item + 1) % MENU_ITEMS; redraw = true; }
         if (b == 3) break;
+        bool menuDown = (a6Stable == A6_MENU);
+        if (menuDown && !menuWasDown) { item = (item + 1) % MENU_ITEMS; redraw = true; }
+        menuWasDown = menuDown;
 
         if (redraw)
         {
             redraw = false;
             lcd.clear();
-            if (item == 0)
+            switch (item)
             {
-                lcd.print(F("BFO:"));
-                lcd.print(bfoHz);
-                lcd.print(F("Hz"));
-            }
-            else
-            {
-                lcd.print(F("CORR:"));
-                lcd.print(corr);
-                lcd.print(F("ppb"));
+                case 0: lcd.print(F("BFO:")); lcd.print(bfoHz); lcd.print(F("Hz")); break;
+                case 1: lcd.print(F("CORR:")); lcd.print(corr); lcd.print(F("ppb")); break;
+                case 2: lcd.print(F("OPP OFFS:")); lcd.print(settings2.oppOffsetHz); lcd.print(F("Hz")); break;
+                case 3: lcd.print(F("CW OFFS:")); lcd.print(settings2.cwOffsetHz); lcd.print(F("Hz")); break;
+                case 4: lcd.print(F("START STEP:")); lcd.print(settings2.defaultStep); break;
+                case 5:
+                    lcd.print(F("ACCEL: "));
+                    lcd.print(settings2.accel == 0 ? F("OFF") : (settings2.accel == 1 ? F("LOW") : F("HIGH")));
+                    break;
             }
             lcd.setCursor(0, 1);
-            lcd.write(byte(7));
-            lcd.print(F("STEP:"));
-            lcd.print(radix);
+            if (item <= 3)
+            {
+                lcd.write(byte(7));
+                lcd.print(F("STEP:"));
+                lcd.print(item == 2 ? min(radix, 1000UL) : (item == 3 ? min(radix, 100UL) : radix));
+            }
+            else
+                lcd.print(F("turn knob"));
+            lcd.setCursor(13, 1);
+            lcd.print(item + 1);
+            lcd.print('/');
+            lcd.print(MENU_ITEMS);
         }
     }
 
     settings.bfo_offset = (int32_t)bfo;
     settings.fcorrection = (int)(corr / 10L);
     saveSettings();
+    saveSettings2();
     lcd.clear();
     lcd.print(F("SAVED"));
     delay(1000);
     lcd.clear();
-    radix = 100;
+    radix = settings2.defaultStep;
     setupmenu = false;
 }
 
@@ -1015,6 +1084,16 @@ void setup()
         settings.vfo = band[currentBand].lastFreq;
     }
     bfo = settings.bfo_offset;
+    eeprom_read_block((void*)&settings2, (void*)SETTINGS2_ADDR, sizeof(settings2));
+    if (settings2.magic != SETTINGS2_MAGIC)
+    {
+        settings2.oppOffsetHz = OPP_OFFSET_HZ;
+        settings2.cwOffsetHz = CW_OFFSET_HZ;
+        settings2.defaultStep = 10;
+        settings2.accel = 1;
+        saveSettings2();
+    }
+    radix = settings2.defaultStep;
 
     // restore the saved frequency if it belongs to the band the switch is on
     if (settings.vfo >= band[currentBand].minFreq && settings.vfo <= band[currentBand].maxFreq)
