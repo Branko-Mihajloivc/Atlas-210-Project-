@@ -45,9 +45,19 @@ struct settings_t
 }
 settings;
 
-// S meter glyphs: both lines = full step, left line only = half step
+// LCD custom characters (8 slots):
+//   0..4 = S-meter digits 1 / 3 / 5 / 7 / 9: small 3x6 digit, or the same digit cut out of a lit
+//          block when the signal reaches that field (slot rewritten only when the state changes)
+//   5 = bar (both lines, full step), 6 = half bar (left line), 7 = step marker (setup menu)
 byte bar5[8] = {B00000, B11011, B11011, B11011, B11011, B11011, B11011, B00000};
 byte barHalf[8] = {B00000, B11000, B11000, B11000, B11000, B11000, B11000, B00000};
+const uint8_t smallDigit[5][6] = {
+    {B010, B110, B010, B010, B010, B111},   // 1
+    {B111, B001, B011, B001, B001, B111},   // 3
+    {B111, B100, B111, B001, B001, B111},   // 5
+    {B111, B001, B001, B010, B010, B010},   // 7
+    {B111, B101, B101, B111, B001, B111}};  // 9
+int8_t digitLit[5] = {-1, -1, -1, -1, -1};  // what is in CGRAM slots 0..4 now (-1 = not loaded)
 // Step marker glyph (setup menu)
 byte bar1[8] = {B10000, B11000, B11100, B11110, B11110, B11100, B11000, B10000};
 
@@ -63,6 +73,9 @@ byte bar1[8] = {B10000, B11000, B11100, B11110, B11110, B11100, B11000, B10000};
 #define MENU_HOLD_MS   1000                 // hold MENU this long to open the setup menu
 #define OPP_OFFSET_HZ  3300                 // MODE OPP: carrier on the other side of the filter (like the 5523.3 kHz crystal)
 #define TX_BTN       A2                     // LOW = TX
+#define AGC_SENSE    4                      // AGC rocker pole 2: LOW = fast
+#define ATT_SENSE    5                      // ATT relay coil (1N4148): LOW = ATT on
+#define PRE_SENSE    6                      // PRE relay coil (1N4148): LOW = PRE on
 #define SMETER_IN    A1                     // PC-100 pin 15: S meter amp output (rises with signal)
 #define SMETER_REF_IN A0                    // PC-100 pin 16: S meter bridge reference (ZERO pot R222)
 // Both through 10k in series + 100nF to GND at the radio end; 1k between pin 15 and 16 replaces the
@@ -131,6 +144,8 @@ volatile unsigned long encLastEdge = 0;
 
 bool cwMode = false;                        // S3 in CW: carrier shifted into the passband
 bool modeOpp = false;                       // MODE rocker: opposite sideband
+bool agcFast = false, attOn = false, preOn = false;
+bool flagsDirty = true;                     // row 2 cols 0-3 (ATT / PRE) must be redrawn
 enum A6State : uint8_t { A6_NONE, A6_STEP, A6_MENU, A6_MODE };
 A6State a6Stable = A6_NONE;
 unsigned long menuDownSince = 0;
@@ -161,7 +176,6 @@ uint16_t smeterRefMv = 0;                   // pin 16
 int16_t smeterDiffMv = 0;                   // pin 15 - pin 16, as measured
 int16_t smeterShownMv = 0;                  // with meter ballistics (fast attack, slow decay)
 int8_t smeterLastBars = -1;                 // what is on the LCD now; -1 = redraw
-int8_t smeterLastS = -1;
 int8_t smeterLastOver = -2;
 uint16_t i2cTimeouts = 0;
 
@@ -616,46 +630,94 @@ int smeterDb(int sigMv)
     return (int)db;
 }
 
+// Load CGRAM slot k (0..4) with digit k small (lit = false) or inverted (lit = true)
+void loadDigit(uint8_t k, bool lit)
+{
+    uint8_t g[8];
+    g[0] = lit ? B11111 : 0;
+    g[7] = lit ? B11111 : 0;
+    for (uint8_t r = 0; r < 6; r++)
+    {
+        uint8_t row = smallDigit[k][r] << 1;          // 3 dots in the middle of 5
+        g[r + 1] = lit ? (uint8_t)(~row & B11111) : row;
+    }
+    lcd.createChar(k, g);
+    digitLit[k] = lit;
+}
+
 void display_smeter(int sigMv)
 {
-    // Line 2: "S9>" + columns 3-11 = S1..S9 (two lines per column, one line = 3 dB)
-    //         + columns 12-15 = over S9 as text: "+", "+10", "+20", "+30", "+40"
+    // Line 2 cols 4-12: S1..S9. Odd S-units = small digit, inverted once reached; even S-units =
+    // bar (two lines, one line = 3 dB). Cols 13-15: over S9 as text "+", "+10".."+40".
     int db = constrain(smeterDb(sigMv), 0, 94);
     int halves = (db < 54 ? db : 54) / 3;   // 0..18
-    int sunits = (db >= 54) ? 9 : db / 6;
     int over = (db > 54) ? db - 54 : 0;     // dB over S9
     int overShown = (over == 0) ? -1 : (over / 10) * 10;   // -1 = nothing, 0 = "+", 10.. = "+10"..
     // Only write the LCD when something visible changes: every LCD write is a burst of
     // digital edges on the data lines that can be heard in the receiver.
-    if (halves == smeterLastBars && sunits == smeterLastS && overShown == smeterLastOver)
+    if (halves == smeterLastBars && overShown == smeterLastOver)
         return;
     smeterLastBars = halves;
-    smeterLastS = sunits;
     smeterLastOver = overShown;
-    lcd.setCursor(0, 1);
-    lcd.print('S');
-    lcd.print(sunits);
-    lcd.print('>');
+    for (uint8_t k = 0; k < 5; k++)          // digit slots first (createChar moves the cursor)
+    {
+        bool lit = (halves - 4 * k) >= 2;
+        if (digitLit[k] != (int8_t)lit)
+            loadDigit(k, lit);
+    }
+    lcd.setCursor(4, 1);
     for (int i = 0; i < 9; i++)
     {
         int h = halves - 2 * i;
-        if (h >= 2)
-            lcd.write(byte(0));             // both lines
+        if ((i & 1) == 0)
+            lcd.write(byte(i / 2));         // digit field (small or inverted)
+        else if (h >= 2)
+            lcd.write(byte(5));             // both lines
         else if (h == 1)
-            lcd.write(byte(2));             // left line only
+            lcd.write(byte(6));             // left line only
         else
             lcd.print(' ');
     }
     if (overShown < 0)
-        lcd.print(F("    "));
+        lcd.print(F("   "));
     else if (overShown == 0)
-        lcd.print(F("+   "));
+        lcd.print(F("+  "));
     else
     {
         lcd.print('+');
         lcd.print(overShown);
-        lcd.print(' ');
     }
+}
+
+// Row 2 cols 0-3: ATT / PRE / blank
+void display_flags2()
+{
+    flagsDirty = false;
+    lcd.setCursor(0, 1);
+    lcd.print(attOn ? F("ATT ") : (preOn ? F("PRE ") : F("    ")));
+}
+
+// D4 / D5 / D6 read every 50 ms; a change redraws only what it affects
+void updateSense()
+{
+    static unsigned long last = 0;
+    if (millis() - last < 50)
+        return;
+    last = millis();
+    bool f = !digitalRead(AGC_SENSE), a = !digitalRead(ATT_SENSE), p = !digitalRead(PRE_SENSE);
+    if (f != agcFast)
+    {
+        agcFast = f;
+        changed_f = true;                   // row 1 col 15
+    }
+    if (a != attOn || p != preOn)
+    {
+        attOn = a;
+        preOn = p;
+        flagsDirty = true;
+    }
+    if (flagsDirty)
+        display_flags2();
 }
 
 // Average of SMETER_SAMPLES readings in mV (5 V reference)
@@ -729,9 +791,20 @@ void print3(uint16_t v)
 /**************************************/
 void display_frequency()
 {
+    // Row 1: cols 0-2 mode (USB / LSB / CW / TX), 4-13 frequency, 14 '!', 15 AGC F / S
     uint32_t f = vfo;
     lcd.setCursor(0, 0);
-    lcd.print(cwMode ? F("CW: ") : F("VFO:"));
+    if (cwMode)
+        lcd.print(F("CW  "));
+    else if (txon)
+        lcd.print(F("TX  "));
+    else
+    {
+        bool lsb = band[currentBand].ifPositive;     // Atlas: LSB on 80 / 40, USB on 20 / 15 / 10
+        if (modeOpp)
+            lsb = !lsb;
+        lcd.print(lsb ? F("LSB ") : F("USB "));
+    }
     uint16_t mhz = f / 1000000UL;
     if (mhz < 10)
         lcd.print(' ');
@@ -740,8 +813,8 @@ void display_frequency()
     print3((f / 1000UL) % 1000);
     lcd.print('.');
     print3(f % 1000UL);
-    lcd.print(F("  "));                     // clear columns 14-15
-    show_i2c_flag();
+    lcd.print(i2cTimeouts ? '!' : ' ');     // col 14
+    lcd.print(agcFast ? 'F' : 'S');         // col 15
 }
 
 void show_main()
@@ -861,7 +934,7 @@ void runSetupMenu()
                 lcd.print(F("ppb"));
             }
             lcd.setCursor(0, 1);
-            lcd.write(byte(1));
+            lcd.write(byte(7));
             lcd.print(F("STEP:"));
             lcd.print(radix);
         }
@@ -884,15 +957,18 @@ void setup()
     pinMode(BAND_SELECT_IN, INPUT);
     pinMode(BTN_IN, INPUT);
     pinMode(TX_BTN, INPUT_PULLUP);
+    pinMode(AGC_SENSE, INPUT_PULLUP);
+    pinMode(ATT_SENSE, INPUT_PULLUP);
+    pinMode(PRE_SENSE, INPUT_PULLUP);
 
     // set up the LCD's number of columns and rows:
     lcd.begin(16, 2);
-    lcd.createChar(0, bar5);
-    lcd.createChar(1, bar1);
-    lcd.createChar(2, barHalf);
+    lcd.createChar(5, bar5);
+    lcd.createChar(6, barHalf);
+    lcd.createChar(7, bar1);
     lcd.clear();
     lcd.setCursor(0, 0);
-    lcd.print(F("YU5KBM ATLAS 210"));
+    lcd.print(F("YT3CT ATLAS 210X"));
     lcd.setCursor(4, 1);
     lcd.print(F("loading"));
     delay(1000);
@@ -954,6 +1030,7 @@ void setup()
     txon = !digitalRead(TX_BTN);
     lcd.clear();
     smeterLastBars = -1;             // force the S meter line to be drawn
+    flagsDirty = true;
     changed_f = true;                // program CLK0/CLK1 and draw the display on the first loop
 
 #if DEBUG_SERIAL
@@ -980,6 +1057,7 @@ void loop()
 
     updateBand();
     updateS3();
+    updateSense();
     tune(takeEncoderSteps());
 
     // I2C timeout happened: program the Si5351 again
@@ -1012,6 +1090,7 @@ void loop()
             runSetupMenu();
             lcd.clear();
             smeterLastBars = -1;
+            flagsDirty = true;
             changed_f = true;
         }
     }
@@ -1074,6 +1153,9 @@ void printStatus()
     Serial.print(F(" A6="));
     Serial.print(readA6());
     Serial.print(modeOpp ? F(" OPP") : F(" NORM"));
+    Serial.print(agcFast ? F(" AGC=F") : F(" AGC=S"));
+    if (attOn) Serial.print(F(" ATT"));
+    if (preOn) Serial.print(F(" PRE"));
     Serial.print(F(" loDiv="));
     Serial.print(loDivider);
     Serial.print(F(" score="));
