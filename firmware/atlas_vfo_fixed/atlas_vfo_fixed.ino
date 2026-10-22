@@ -71,7 +71,7 @@ byte bar1[8] = {B10000, B11000, B11100, B11110, B11110, B11100, B11000, B10000};
 // S3 position on A7: +CW -> 1N4148 -> 22k -> A7, CAL line -> 1N4148 -> 47k -> A7, 10k A7 -> GND.
 // CW about 3.8 V, CAL about 2.1 V, REC / TRANS 0 V. Set CW_SENSE_FITTED 0 while the network is not
 // wired: an open A7 floats and would switch CW on and off at random.
-#define CW_SENSE_FITTED  0                // set to 1 once the A7 network is wired
+#define CW_SENSE_FITTED  1                // A7 network wired 2026-10-23
 #define S3_SENSE_IN      A7
 #define S3_CW_MIN_RAW    620                // above = CW (3.8 V = 778)
 #define S3_CAL_MIN_RAW   300                // above = CAL (2.1 V = 430)
