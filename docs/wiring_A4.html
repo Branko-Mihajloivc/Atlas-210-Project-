@@ -279,7 +279,7 @@
       <h2>8. J4 rear socket (old EXT OSC) &mdash; CAT / PTT / audio <span class="tag">proposal</span></h2>
       <table>
         <tr><th class="c">Pin</th><th>Use</th></tr>
-        <tr><td class="c">1</td><td>RST (grey) &mdash; <b>10 nF (103) in series</b> between pin 1 and Nano RST, at the Nano end (not to GND). From adapter DTR (programming from the rear)</td></tr>
+        <tr><td class="c">1</td><td>RST (grey) &mdash; <b>1 &micro;F (105) in series</b> between pin 1 and Nano RST, at the Nano end (not to GND). 10 nF is too small: the Nano's own 100 nF on RST swallows the pulse. From adapter DTR (programming from the rear)</td></tr>
         <tr><td class="c">2</td><td>Nano TX D1 (green) &rarr; adapter RX</td></tr>
         <tr><td class="c">3</td><td>Nano RX D0 (white) &larr; adapter TX</td></tr>
         <tr><td class="c">4</td><td>GND (black, chassis / Nano GND)</td></tr>

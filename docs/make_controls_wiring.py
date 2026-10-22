@@ -284,7 +284,7 @@ tr.grp td { background: #f5f5f5; font-weight: 700; }
 <table>
 <tr><th>#</th><th>Nano pin</th><th>Wire</th><th>Far end</th><th>Parts / notes</th></tr>
 <tr class="grp"><td colspan="5">Rear socket J4 &mdash; twisted 4-wire set</td></tr>
-<tr><td>1</td><td>RST</td><td>grey</td><td>J4 pin 1</td><td>10 nF (103) in series, <b>at the Nano end</b></td></tr>
+<tr><td>1</td><td>RST</td><td>grey</td><td>J4 pin 1</td><td>1 &micro;F (105) in series, <b>at the Nano end</b> (10 nF is too small against the Nano's own 100 nF)</td></tr>
 <tr><td>2</td><td>D1 (TX)</td><td>green</td><td>J4 pin 2</td><td>to adapter RX</td></tr>
 <tr><td>3</td><td>D0 (RX)</td><td>white</td><td>J4 pin 3</td><td>from adapter TX</td></tr>
 <tr><td>4</td><td>GND</td><td>black</td><td>J4 pin 4</td><td>chassis / Nano GND</td></tr>
