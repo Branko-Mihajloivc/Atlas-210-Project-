@@ -49,8 +49,16 @@ settings;
 //   0..4 = S-meter digits 1 / 3 / 5 / 7 / 9: small 3x6 digit, or the same digit cut out of a lit
 //          block when the signal reaches that field (slot rewritten only when the state changes)
 //   5 = bar (both lines, full step), 6 = half bar (left line), 7 = step marker (setup menu)
-byte bar5[8] = {B00000, B11011, B11011, B11011, B11011, B11011, B11011, B00000};
-byte barHalf[8] = {B00000, B11000, B11000, B11000, B11000, B11000, B11000, B00000};
+// bars: thin lines over the same 7 rows as the LCD digits
+byte bar5[8] = {B01010, B01010, B01010, B01010, B01010, B01010, B01010, B00000};
+byte barHalf[8] = {B01000, B01000, B01000, B01000, B01000, B01000, B01000, B00000};
+// LCD (HD44780) digits 1 3 5 7 9 with an underline in row 8: shown once the signal reaches that S-unit
+byte ulDigit[5][8] = {
+    {B00100, B01100, B00100, B00100, B00100, B00100, B01110, B11111},   // 1
+    {B11111, B00010, B00100, B00010, B00001, B10001, B01110, B11111},   // 3
+    {B11111, B10000, B11110, B00001, B00001, B10001, B01110, B11111},   // 5
+    {B11111, B00001, B00010, B00100, B01000, B01000, B01000, B11111},   // 7
+    {B01110, B10001, B10001, B01111, B00001, B00010, B01100, B11111}};  // 9
 const uint8_t smallDigit[5][6] = {
     {B010, B110, B010, B010, B010, B111},   // 1
     {B111, B001, B011, B001, B001, B111},   // 3
@@ -73,7 +81,7 @@ byte bar1[8] = {B10000, B11000, B11100, B11110, B11110, B11100, B11000, B10000};
 #define MENU_HOLD_MS   1000                 // hold MENU this long to open the setup menu
 #define OPP_OFFSET_HZ  3300                 // MODE OPP: carrier on the other side of the filter (like the 5523.3 kHz crystal)
 #define TX_BTN       A2                     // LOW = TX
-#define SMETER_DIGIT_STYLE 0               // 0 = normal LCD digits (static), 1 = small digits, inverted when reached
+#define SMETER_DIGIT_STYLE 2               // 0 = LCD digits, 1 = small digits inverted when reached, 2 = LCD digits underlined when reached
 #define AGC_SENSE    4                      // AGC rocker pole 2: LOW = fast
 #define ATT_SENSE    5                      // ATT relay coil (1N4148): LOW = ATT on
 #define PRE_SENSE    6                      // PRE relay coil (1N4148): LOW = PRE on
@@ -675,8 +683,15 @@ void display_smeter(int sigMv)
         if ((i & 1) == 0)
 #if SMETER_DIGIT_STYLE == 1
             lcd.write(byte(i / 2));         // digit field (small or inverted)
+#elif SMETER_DIGIT_STYLE == 2
+        {
+            if (h >= 2)
+                lcd.write(byte(i / 2));     // underlined copy of the LCD digit
+            else
+                lcd.print((char)('1' + i));
+        }
 #else
-            lcd.print((char)('1' + i));     // digit field: normal LCD digit 1 3 5 7 9, not inverted
+            lcd.print((char)('1' + i));     // digit field: normal LCD digit 1 3 5 7 9
 #endif
         else if (h >= 2)
             lcd.write(byte(5));             // both lines
@@ -970,6 +985,10 @@ void setup()
 
     // set up the LCD's number of columns and rows:
     lcd.begin(16, 2);
+#if SMETER_DIGIT_STYLE == 2
+    for (uint8_t k = 0; k < 5; k++)
+        lcd.createChar(k, ulDigit[k]);
+#endif
     lcd.createChar(5, bar5);
     lcd.createChar(6, barHalf);
     lcd.createChar(7, bar1);
