@@ -9,7 +9,7 @@ import tempfile
 import time
 
 HERE = pathlib.Path(__file__).resolve().parent
-PAGES = ['wiring_A4.html', 'controls_wiring.html']
+PAGES = ['wiring_A4.html', 'controls_wiring.html', 'system_wiring.html']
 BROWSERS = [
     r'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe',
     r'C:\Program Files\Microsoft\Edge\Application\msedge.exe',
@@ -34,7 +34,7 @@ DARK_CSS = '''
   svg text { fill: #dcdcdc !important; }
   svg line, svg polyline, svg polygon, svg circle, svg rect, svg path { stroke: #dcdcdc !important; }
   svg circle[fill="#111"], svg .f { fill: #dcdcdc !important; }
-  svg rect[fill="#f3f3f3"] { fill: #2a2a2a !important; }
+  svg rect[fill="#f3f3f3"], svg rect[fill="#f6f6f6"], svg rect[fill="#ececec"] { fill: #2a2a2a !important; }
   svg rect[stroke="#777"] { stroke: #888 !important; }
 </style>
 '''
