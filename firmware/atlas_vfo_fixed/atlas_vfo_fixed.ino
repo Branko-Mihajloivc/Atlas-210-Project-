@@ -54,7 +54,14 @@ byte bar1[8] = {B10000, B11000, B11100, B11110, B11110, B11100, B11000, B10000};
 #define BAND_SELECT_IN A3                   // 5 way rotary switch for band select (resistor ladder)
 #define ENCODER_A    3                      // Encoder pin A
 #define ENCODER_B    2                      // Encoder pin B
-#define ENCODER_BTN  6                      // Step button
+#define BTN_IN       A6                     // STEP / MENU buttons + MODE rocker (resistor ladder)
+// A6: 10k pull-up to 5 V at the Nano. STEP = 0 ohm to GND, MENU = 2.2k, MODE rocker (OPP) = 22k.
+// Readings: STEP 0, MENU ~184 (~170 with MODE on), MODE alone ~700, nothing 1023.
+#define A6_STEP_MAX    100
+#define A6_MENU_MAX    480
+#define A6_MODE_MAX    860
+#define MENU_HOLD_MS   1000                 // hold MENU this long to open the setup menu
+#define OPP_OFFSET_HZ  3300                 // MODE OPP: carrier on the other side of the filter (like the 5523.3 kHz crystal)
 #define TX_BTN       A2                     // LOW = TX
 #define SMETER_IN    A1                     // PC-100 pin 15: S meter amp output (rises with signal)
 #define SMETER_REF_IN A0                    // PC-100 pin 16: S meter bridge reference (ZERO pot R222)
@@ -123,6 +130,10 @@ volatile uint8_t encState = 0;              // last (B << 1) | A
 volatile unsigned long encLastEdge = 0;
 
 bool cwMode = false;                        // S3 in CW: carrier shifted into the passband
+bool modeOpp = false;                       // MODE rocker: opposite sideband
+enum A6State : uint8_t { A6_NONE, A6_STEP, A6_MENU, A6_MODE };
+A6State a6Stable = A6_NONE;
+unsigned long menuDownSince = 0;
 bool calMode = false;                       // S3 in CAL (for later: CLK2 calibrator)
 uint16_t s3Raw = 0;
 uint16_t loDivider = 0;                     // CLK0 output divider in use (even integer)
@@ -209,13 +220,57 @@ uint8_t bandCandidate = 0;
 uint8_t bandStableCount = 0;
 
 /**************************************/
+/* A6: STEP / MENU buttons, MODE      */
+/**************************************/
+uint16_t readA6()
+{
+    analogRead(BTN_IN);                     // dummy read after switching the ADC channel
+    return analogRead(BTN_IN);
+}
+
+A6State classifyA6(uint16_t raw)
+{
+    if (raw < A6_STEP_MAX) return A6_STEP;
+    if (raw < A6_MENU_MAX) return A6_MENU;
+    if (raw < A6_MODE_MAX) return A6_MODE;
+    return A6_NONE;
+}
+
+// Sampled every 5 ms, must read the same twice in a row (no capacitor on the ladder yet)
+void updateA6()
+{
+    static unsigned long last = 0;
+    static A6State cand = A6_NONE;
+    if (millis() - last < 5)
+        return;
+    last = millis();
+    A6State c = classifyA6(readA6());
+    if (c != cand)
+    {
+        cand = c;
+        return;
+    }
+    a6Stable = c;
+    // MODE is latching: its state is only taken while no button is pressed
+    bool opp = modeOpp;
+    if (c == A6_MODE) opp = true;
+    else if (c == A6_NONE) opp = false;
+    if (opp != modeOpp)
+    {
+        modeOpp = opp;
+        changed_f = true;
+    }
+}
+
+/**************************************/
 /* Button multi-click handling        */
 /**************************************/
 int checkButton()
 {
     int event = 0;
     // Read the state of the button
-    buttonVal = digitalRead(ENCODER_BTN);
+    updateA6();
+    buttonVal = (a6Stable == A6_STEP) ? LOW : HIGH;
     // Button pressed down
     if (buttonVal == LOW && buttonLast == HIGH && (millis() - upTime) > debounce) {
         downTime = millis();
@@ -509,11 +564,14 @@ void updateSi5351()
     if (rit && !txon)
         rf += rit_offset;
 
+    // MODE OPP: carrier on the other side of the filter, LO follows so the dial stays right.
+    // CW always uses NORM (Atlas manual: sideband selector in NORM for CW).
+    uint64_t bfoRx = bfo + ((modeOpp && !cwMode) ? (uint64_t)OPP_OFFSET_HZ * SI5351_FREQ_MULT : 0);
     uint64_t clk0 = (uint64_t)rf * SI5351_FREQ_MULT;
     if (band[currentBand].ifPositive)
-        clk0 += bfo;
+        clk0 += bfoRx;
     else
-        clk0 -= bfo;
+        clk0 -= bfoRx;
 
     // LO: even integer divider on PLLA. Same divider = only the PLL registers are written
     // (fewer I2C writes per tuning step = less noise while tuning).
@@ -529,7 +587,7 @@ void updateSi5351()
         si5351.set_pll(clk0 * d, SI5351_PLLA);
 
     // BFO / carrier: own PLLB, even integer divider. In CW the carrier moves into the passband.
-    uint64_t clk1 = bfo + (cwMode ? (uint64_t)CW_OFFSET_HZ * SI5351_FREQ_MULT : 0);
+    uint64_t clk1 = bfoRx + (cwMode ? (uint64_t)CW_OFFSET_HZ * SI5351_FREQ_MULT : 0);
     if (clk1 != lastBfoSet)
     {
         uint16_t dB = chooseDivider(clk1, 0);
@@ -747,7 +805,7 @@ void runSetupMenu()
     lcd.print(F("VFO SETUP MODE"));
     lcd.setCursor(0, 1);
     lcd.print(F("release button"));
-    while (!digitalRead(ENCODER_BTN))
+    while (readA6() < A6_MENU_MAX)          // wait until STEP / MENU is released
         ;
     delay(500);
     buttonLast = HIGH;
@@ -824,7 +882,7 @@ void setup()
 {
     Serial.begin(19200);
     pinMode(BAND_SELECT_IN, INPUT);
-    pinMode(ENCODER_BTN, INPUT_PULLUP);
+    pinMode(BTN_IN, INPUT);
     pinMode(TX_BTN, INPUT_PULLUP);
 
     // set up the LCD's number of columns and rows:
@@ -890,7 +948,7 @@ void setup()
     PCMSK2 |= (1 << PCINT18) | (1 << PCINT19);
     sei();
 
-    if (!digitalRead(ENCODER_BTN))
+    if (classifyA6(readA6()) == A6_STEP)    // STEP held at power on = setup menu
         runSetupMenu();
 
     txon = !digitalRead(TX_BTN);
@@ -942,6 +1000,23 @@ void loop()
     }
 
     updateSmeter();
+
+    // MENU held MENU_HOLD_MS = setup menu, at any time
+    if (a6Stable == A6_MENU)
+    {
+        if (menuDownSince == 0)
+            menuDownSince = millis();
+        else if (millis() - menuDownSince >= MENU_HOLD_MS && !txon)
+        {
+            menuDownSince = 0;
+            runSetupMenu();
+            lcd.clear();
+            smeterLastBars = -1;
+            changed_f = true;
+        }
+    }
+    else
+        menuDownSince = 0;
 
     int b = checkButton();
     if (b == 1) clickEvent();
@@ -996,6 +1071,9 @@ void printStatus()
     Serial.print(F(" A7="));
     Serial.print(s3Raw);
     Serial.print(cwMode ? F(" CW") : (calMode ? F(" CAL") : F("")));
+    Serial.print(F(" A6="));
+    Serial.print(readA6());
+    Serial.print(modeOpp ? F(" OPP") : F(" NORM"));
     Serial.print(F(" loDiv="));
     Serial.print(loDivider);
     Serial.print(F(" score="));
