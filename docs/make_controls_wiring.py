@@ -200,30 +200,31 @@ text(1000, 418, '(centre = NORM)', 10)
 text(240, 337, 'D5 sense wire', 11, 'middle')
 text(240, 437, 'D6 sense wire', 11, 'middle')
 
-# ---------------- 3. AGC ----------------
-text(300, 500, '3. AGC fast / slow  (rocker at the front)', 12, 'start', True)
-text(1060, 548, '+12 V', 11, 'end')
-line(1000, 545, 1060, 545) if False else None
-E.append('<circle cx="1000" cy="545" r="3" fill="none" stroke="#111"/>')
-E.append('<circle cx="940" cy="545" r="3" fill="none" stroke="#111"/>')
-line(1000, 545, 1020, 545)
-line(943, 545, 995, 530, 1.4)
-text(970, 528, 'SPST', 10, 'middle')
-line(937, 545, 700, 545)
-dot(700, 545)
-# to 2N7000 board
-line(700, 545, 700, 575)
+# ---------------- 3. AGC (DPDT rocker) ----------------
+text(300, 492, '3. AGC fast / slow  (DPDT rocker at the front, 2nd pole tells the Nano)', 12, 'start', True)
+# pole 1: +12 V to the AGC circuit
+text(1062, 513, '+12 V', 11, 'end')
+E.append('<circle cx="1000" cy="510" r="3" fill="none" stroke="#111"/>')
+E.append('<circle cx="940" cy="510" r="3" fill="none" stroke="#111"/>')
+line(1003, 510, 1022, 510)
+line(943, 510, 995, 496, 1.4)
+line(937, 510, 700, 510)
+line(700, 510, 700, 575)
 E.append('<rect x="560" y="575" width="230" height="44" rx="4" fill="none" stroke="#111" stroke-width="1.2"/>')
 text(675, 593, '2N7000 at PC-300D: gate via 100 Ω,', 10, 'middle')
 text(675, 609, '100 k gate–GND, drain via R fast to hold node', 10, 'middle')
-# divider to D4 (at the source end)
-line(700, 545, 360, 545)
-res_h(300, 360, 545, '22 k')
-dot(300, 545)
-line(170, 545, 300, 545)
-res_v(300, 545, 590, '10 k', 10)
-gnd(300, 590)
-text(240, 537, 'D4 sense wire', 11, 'middle')
+# pole 2: common GND, "fast" throw to D4 (INPUT_PULLUP, LOW = fast)
+E.append('<circle cx="1000" cy="550" r="3" fill="none" stroke="#111"/>')
+E.append('<circle cx="940" cy="550" r="3" fill="none" stroke="#111"/>')
+line(943, 550, 995, 536, 1.4)
+line(1003, 550, 1030, 550)
+gnd(1030, 550)
+line(968, 503, 968, 543, 1.0, '3 3')
+text(1010, 540, 'fast', 10)
+line(170, 545, 690, 545)
+line(690, 545, 690, 550)
+line(690, 550, 937, 550)
+text(300, 537, 'D4 sense wire (orange) — no divider', 11, 'middle')
 
 # ---------------- 4. A2 TX ----------------
 line(170, 655, 270, 655)
@@ -294,7 +295,7 @@ tr.grp td { background: #f5f5f5; font-weight: 700; }
 <tr class="grp"><td colspan="5">Sense inputs (Nano only listens, 5 V or less on the wire)</td></tr>
 <tr><td>7</td><td>D5</td><td>grey</td><td>ATT relay coil low end</td><td>1N4148, band to the coil</td></tr>
 <tr><td>8</td><td>D6</td><td>red</td><td>PRE relay coil low end</td><td>1N4148, band to the coil (after STEP moved to A6)</td></tr>
-<tr><td>9</td><td>D4</td><td>orange</td><td>AGC switched +12 V</td><td>22 k series + 10 k to GND (divider at the far end)</td></tr>
+<tr><td>9</td><td>D4</td><td>orange</td><td>AGC rocker 2nd pole</td><td>DPDT: 2nd pole common = GND, &ldquo;fast&rdquo; throw = D4. No divider</td></tr>
 <tr><td>10</td><td>A2</td><td>white</td><td>KEY line</td><td>1N4148 fitted <b>at the Nano end</b> (band to the KEY line), well insulated &mdash; the white wire carries +13 V</td></tr>
 <tr><td>11</td><td>A7</td><td>blue</td><td>S3 network</td><td>network &rarr; <b>orange</b> to CAL (1N4148 + 47 k), <b>white/black</b> to +CW (1N4148 + 22 k), 10 k to GND</td></tr>
 <tr class="grp"><td colspan="5">Output / supply</td></tr>

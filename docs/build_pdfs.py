@@ -5,6 +5,8 @@ Needs Microsoft Edge (or Chrome) for the headless print. Run: python build_pdfs.
 import os
 import pathlib
 import subprocess
+import tempfile
+import time
 
 HERE = pathlib.Path(__file__).resolve().parent
 PAGES = ['wiring_A4.html', 'controls_wiring.html']
@@ -46,10 +48,31 @@ def browser():
 
 
 def to_pdf(html_path, pdf_path):
+    """Print to a temporary file first, then replace the PDF. If the PDF is open in a viewer
+    (file locked), say so instead of silently keeping the old version."""
     url = html_path.resolve().as_uri()
+    tmp = pathlib.Path(str(pdf_path)[:-4] + '.tmp.pdf')
+    if tmp.exists():
+        tmp.unlink()
+    # own profile dir = own browser instance (otherwise a running Edge may take over and return early)
+    profile = pathlib.Path(tempfile.gettempdir()) / 'atlas_pdf_profile'
     subprocess.run([browser(), '--headless', '--disable-gpu', '--no-pdf-header-footer',
-                    f'--print-to-pdf={pdf_path}', url], check=True,
+                    f'--user-data-dir={profile}', f'--print-to-pdf={tmp}', url], check=True,
                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    for _ in range(100):                    # wait until the file is there and no longer growing
+        if tmp.exists() and tmp.stat().st_size > 0:
+            size = tmp.stat().st_size
+            time.sleep(0.3)
+            if tmp.stat().st_size == size:
+                break
+        time.sleep(0.2)
+    if not tmp.exists() or tmp.stat().st_size == 0:
+        raise SystemExit(f'printing {html_path.name} failed')
+    try:
+        os.replace(tmp, pdf_path)
+    except PermissionError:
+        tmp.unlink()
+        raise SystemExit(f'{pathlib.Path(pdf_path).name} is open in a viewer (locked) - close it and run again')
 
 
 for name in PAGES:

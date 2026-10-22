@@ -225,11 +225,11 @@
         <li><span class="warn">Only in the receive line after the antenna relay &mdash; never in the TX path.</span> Short leads / thin coax.</li>
       </ul>
 
-      <h2>5. AGC fast/slow &mdash; rocker switch, sense D4 <span class="tag">proposal</span></h2>
+      <h2>5. AGC fast/slow &mdash; DPDT rocker, sense D4 <span class="tag">proposal</span></h2>
       <ul>
         <li>2N7000 at PC-300D: gate via 100 &Omega; from the rocker (+12 V), 100 k gate&ndash;GND, source GND, drain via R<sub>fast</sub> (~150&ndash;330 k, to try) to the AGC hold node on PC-300D.</li>
         <li>Parts on PC-300D to be identified by value first (hold cap / 1 M discharge R).</li>
-        <li>Sense: rocker on the GND side + 1N4148 to D4, or 22 k / 10 k divider from the switched +12 V.</li>
+        <li>Sense: <b>DPDT rocker</b> &mdash; 2nd pole common to GND, &ldquo;fast&rdquo; throw to D4 (INPUT_PULLUP, LOW = fast). No divider.</li>
       </ul>
 
     </div>
