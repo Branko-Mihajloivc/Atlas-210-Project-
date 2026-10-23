@@ -24,7 +24,7 @@ project: replace the VFO with an Si5351, then improve whatever else could be mad
 | [`firmware/VB_LocalDisplay_fixed`](firmware/VB_LocalDisplay_fixed) | VariBeam DSP control Nano sketch (current) |
 | [`firmware/original_2023`](firmware/original_2023) | The 2023 versions, for reference |
 | [`3d`](3d) | Front plate STL (original and corrected) + Python scripts used to measure and fix it |
-| [`docs`](docs) | Project status / measurements, system wiring diagram (A3), wiring sheet and controls schematic (PDF + HTML, `*_dark.pdf` for the screen, `build_pdfs.py` rebuilds them), LCD layout mockup (`lcd_mockup.html`) |
+| [`docs`](docs) | Project status / measurements, system wiring diagram (A3), wiring sheet, controls schematic, BFG135 RX preamp (PDF + HTML, `*_dark.pdf` for the screen, `build_pdfs.py` rebuilds them), LCD layout mockup (`lcd_mockup.html`) |
 | [`tools`](tools) | PowerShell helpers: upload over a CH340 port when avrdude fails, serial reader, bootloader check, flash backup; 2023 firmware backup |
 | [`photos`](photos) | Build photos |
 

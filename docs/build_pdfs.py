@@ -9,7 +9,7 @@ import tempfile
 import time
 
 HERE = pathlib.Path(__file__).resolve().parent
-PAGES = ['wiring_A4.html', 'controls_wiring.html', 'system_wiring.html']
+PAGES = ['wiring_A4.html', 'controls_wiring.html', 'system_wiring.html', 'preamp_bfg135.html']
 BROWSERS = [
     r'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe',
     r'C:\Program Files\Microsoft\Edge\Application\msedge.exe',
