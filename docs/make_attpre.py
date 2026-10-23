@@ -104,14 +104,14 @@ T(330, Y - 46, 'bypass (NOR / PRE)', 10, 'middle')
 # pi-pad NO-NO
 L(a_nc, Y + 40, 220, Y + 40)
 dot(220, Y + 40)
-res_v(220, Y + 40, Y + 100, '100 Ω', 10)
+res_v(220, Y + 40, Y + 100, '68 Ω', 10)
 gnd(220, Y + 100)
-res_h(220, 440, Y + 40, '68 Ω')
+res_h(220, 440, Y + 40, '150 Ω')
 dot(440, Y + 40)
-res_v(440, Y + 40, Y + 100, '100 Ω', 10)
+res_v(440, Y + 40, Y + 100, '68 Ω', 10)
 gnd(440, Y + 100)
 L(440, Y + 40, b_nc, Y + 40)
-T(330, Y + 128, '10 dB π-pad (exact 96 / 71 / 96 Ω)', 10, 'middle')
+T(330, Y + 128, '~16 dB π-pad (20 dB: 62 / 240 / 62 Ω)', 10, 'middle')
 # K1b common -> K2a common
 L(540, Y, 620, Y)
 # ---- K2 PRE ----
@@ -187,7 +187,7 @@ T(990, 358, 'collector = preamp supply.', 10)
 svg = '<svg viewBox="0 0 1170 555" xmlns="http://www.w3.org/2000/svg" font-family="Arial, sans-serif">' + ''.join(E) + '</svg>'
 
 page1 = '''<div class="page" id="attpre">
-  <h1>ATT / PRE board &mdash; relays, 10 dB attenuator, BFG135 preamp</h1>
+  <h1>ATT / PRE board &mdash; relays, ~16 dB attenuator, BFG135 preamp</h1>
   <div class="sub">YT3CT &middot; 2026-10 &middot; proposal &middot; RX line between PC-800 OUT and PC-100 pin 1 (after the preselector). RX only &mdash; never in the TX path.</div>
   ''' + svg + '''
   <ul>
@@ -219,7 +219,7 @@ page1 = '''<div class="page" id="attpre">
       <table>
         <tr><th>Rocker</th><th>K1</th><th>K2</th><th>Signal path</th><th>D5 / D6</th></tr>
         <tr><td>NOR</td><td>off</td><td>off</td><td>bypass &ndash; bypass</td><td>HIGH / HIGH</td></tr>
-        <tr><td>ATT</td><td>on</td><td>off</td><td>&pi;-pad (&minus;10 dB) &ndash; bypass</td><td>LOW / HIGH</td></tr>
+        <tr><td>ATT</td><td>on</td><td>off</td><td>&pi;-pad (&minus;16 dB) &ndash; bypass</td><td>LOW / HIGH</td></tr>
         <tr><td>PRE</td><td>off</td><td>on</td><td>bypass &ndash; preamp (+10 dB)</td><td>HIGH / LOW</td></tr>
       </table>
     </div>
@@ -230,8 +230,8 @@ page1 = '''<div class="page" id="attpre">
         <tr><td>K1, K2</td><td>Finder 30.22.7.012 DPDT 12 V</td><td>720 &Omega; coil, AgNi+Au, 5 mm pitch</td></tr>
         <tr><td>D1, D2</td><td>1N4148</td><td>flyback across K1 / K2 (band to +12 V)</td></tr>
         <tr><td>D3, D4</td><td>1N4148</td><td>sense: anode to J3-5 / J3-6, band to the coil low end</td></tr>
-        <tr><td>R10, R12</td><td>100 &Omega; (exact 96)</td><td>&pi;-pad shunt</td></tr>
-        <tr><td>R11</td><td>68 &Omega; (exact 71)</td><td>&pi;-pad series</td></tr>
+        <tr><td>R10, R12</td><td>68 &Omega;</td><td>&pi;-pad shunt (20 dB version: 62 &Omega;)</td></tr>
+        <tr><td>R11</td><td>150 &Omega;</td><td>&pi;-pad series (20 dB version: 240 &Omega;) &mdash; 15.9 dB, Z<sub>in</sub> 49.3 &Omega;</td></tr>
         <tr><td>Q1 + preamp</td><td>BFG135 + parts of page 3</td><td>R1 1.5 k, R2 390, RF 220, RE1 10, RE2 22, R6 47, L1 100 &micro;H, L2 22 &micro;H, C1&ndash;C6, CE, ferrite bead</td></tr>
         <tr><td>Q2 (option)</td><td>BC557 + R13 4.7 k</td><td>switches the preamp supply with PRE</td></tr>
         <tr><td>C7</td><td>100 nF + 10 &micro;F</td><td>+12 V decoupling at J3</td></tr>

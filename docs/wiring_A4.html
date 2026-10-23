@@ -206,22 +206,22 @@
         <text x="232" y="40">1N4148</text>
         <text x="272" y="53">D5 / D6</text>
         <!-- pi pad -->
-        <text x="4" y="100">10 dB &pi;-pad:</text>
+        <text x="4" y="100">16 dB &pi;-pad:</text>
         <text x="4" y="114">RX in</text>
         <line class="w" x1="30" y1="111" x2="140" y2="111"/>
         <polyline class="w" points="140,111 144,111 147,106 153,116 159,106 165,116 171,106 174,111 178,111"/>
         <line class="w" x1="178" y1="111" x2="280" y2="111"/>
-        <text x="149" y="100">68 &Omega;</text>
+        <text x="146" y="100">150 &Omega;</text>
         <text x="286" y="114">RX out</text>
         <circle class="f" cx="110" cy="111" r="2"/><circle class="f" cx="210" cy="111" r="2"/>
         <polyline class="w" points="110,111 110,114 105,116 115,120 105,124 115,128 110,130"/>
         <polyline class="w" points="210,111 210,114 205,116 215,120 205,124 215,128 210,130"/>
-        <text x="44" y="126">100 &Omega; &rarr; GND</text>
-        <text x="218" y="126">100 &Omega; &rarr; GND</text>
+        <text x="44" y="126">68 &Omega; &rarr; GND</text>
+        <text x="218" y="126">68 &Omega; &rarr; GND</text>
       </svg>
       <ul>
         <li>Coil high end on +12 V, the rocker switches the coil low end to GND (ATT or PRE, centre = NORM). The 1N4148 (band to the coil) passes the LOW to the Nano pin and blocks the +12 V when off.</li>
-        <li>DPDT signal relays: both poles switch the RF (in and out). &pi;-pad 100 / 68 / 100 &Omega; &asymp; 10 dB (exact: 96 / 71 / 96 &Omega;).</li>
+        <li>DPDT signal relays: both poles switch the RF (in and out). &pi;-pad 68 / 150 / 68 &Omega; &asymp; 16 dB (20 dB: 62 / 240 / 62 &Omega;). Full board: preamp_bfg135.pdf.</li>
         <li><span class="warn">Only in the receive line after the antenna relay &mdash; never in the TX path.</span> Short leads / thin coax.</li>
       </ul>
 
