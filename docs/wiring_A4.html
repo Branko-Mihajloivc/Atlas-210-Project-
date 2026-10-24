@@ -85,7 +85,7 @@
         <tr><td>D4</td><td>free</td><td>AGC fast switch sense</td></tr>
         <tr><td>D5</td><td>free</td><td>ATT relay sense</td></tr>
         <tr><td>D6</td><td>STEP button</td><td>PRE relay sense (STEP &rarr; A6)</td></tr>
-        <tr><td>D13</td><td>spare</td><td>wire run; <b>not for PTT</b> (bootloader blinks D13)</td></tr>
+        <tr><td>D13</td><td>PTT request</td><td>&rarr; 10 k &rarr; VariBeam Nano D8 (300 ms filter: bootloader blinks ignored)</td></tr>
         <tr><td>A6</td><td>free (analog)</td><td>STEP, MENU + MODE rocker</td></tr>
         <tr><td>A7</td><td>free (analog)</td><td>S3 position: CW / CAL sense</td></tr>
               </table>
@@ -286,13 +286,13 @@
         <tr><td class="c">5</td><td>Audio in (PC &rarr; TX): transformer &rarr; 47 k / 470 &Omega; &rarr; PC-200 pin 17 (mic in, MIC gain controls it)</td></tr>
         <tr><td class="c">6</td><td>Audio GND, PC side &mdash; <b>floating</b>, open to chassis</td></tr>
         <tr><td class="c">7</td><td>Audio out (RX &rarr; PC): PC-300 pin 22 &rarr; 1 &micro;F &rarr; 10 k &rarr; transformer (AF gain has no effect)</td></tr>
-        <tr><td class="c">8</td><td>PC PTT (white) &rarr; <b>relay coil</b> (section 10): keys the KEY line and mutes the mic. <b>Not the T line.</b></td></tr>
+        <tr><td class="c">8</td><td>spare (PTT is now CAT &rarr; Nano, section 10)</td></tr>
         <tr><td class="c">9</td><td>spare</td></tr>
       </table>
       <ul>
         <li>Old wires (2&ndash;3 jumper, 5 +8.5 V, 6 stub, 7 T line, 8 +13 V fused) removed, GND on 4 kept. Check REC / SSB TX / CW after.</li>
         <li>USB-TTL adapter outside. Audio via 600:600 transformers, shielded, away from the serial pair. RX audio from PC-300 pin 22 (before the VariBeam).</li>
-        <li>PTT = adapter <b>RTS</b> (via NPN/opto) grounds pin 8 &rarr; PTT relay (section 10). Never DTR (resets the Nano). <b>PTT ON/OFF switch OFF before every upload</b> &mdash; uploading toggles RTS and would key the radio. Not from D13: the bootloader blinks D13 on every reset. CAT (frequency / mode) still through the Nano; debug serial off with CAT.</li>
+        <li>PTT = <b>CAT command</b> (e.g. Kenwood TX; / RX;) over the same TTL adapter &rarr; VFO Nano D13 HIGH &rarr; VariBeam Nano D8; D8 HIGH &ge; 300 ms &rarr; D9 &rarr; BC547 &rarr; PTT relay (section 10). One USB cable for CAT, PTT and uploads. Debug serial off with CAT; WSJT-X / MSHV Tx delay &asymp; 0.5 s.</li>
       </ul>
     </div>
     <div>
@@ -335,7 +335,7 @@
         <text x="2" y="120">+12 V</text>
         <line class="w" x1="30" y1="117" x2="36" y2="117"/><circle class="w" cx="38" cy="117" r="1.6"/><line class="w" x1="40" y1="116" x2="52" y2="109"/><circle class="w" cx="54" cy="117" r="1.6"/><line class="w" x1="56" y1="117" x2="60" y2="117"/><text x="24" y="104">PTT ON/OFF</text>
         <rect class="w" x="60" y="108" width="40" height="18"/><text x="64" y="121">coil</text>
-        <line class="w" x1="100" y1="117" x2="130" y2="117"/><text x="134" y="120">J4 pin 8 (PC grounds it)</text>
+        <line class="w" x1="100" y1="117" x2="130" y2="117"/><text x="134" y="120">BC547 collector (VariBeam D9)</text>
         <text x="2" y="146">KEY line</text>
         <line class="w" x1="40" y1="143" x2="70" y2="143"/>
         <circle class="w" cx="72" cy="143" r="1.6"/><line class="w" x1="74" y1="142" x2="96" y2="134"/><circle class="w" cx="98" cy="143" r="1.6"/>
@@ -353,7 +353,9 @@
         <li>Out from PC-300 pin 22: after the AGC, before AF gain and VariBeam &rarr; level independent of the volume knob.</li>
         <li>In at PC-200 pin 17 (mic input): the MIC gain knob sets the PC level. 47 k / 470 &Omega; = line to mic level.</li>
         <li>DPDT relay (e.g. Finder 30.22, 16 mA) + flyback diode: PC PTT keys the radio <b>and</b> opens the mic line. Mic PTT unchanged.</li>
-        <li><b>PTT ON/OFF switch</b> (SPST, rear or front) in the relay coil +12 V feed: OFF before uploading firmware or opening the port with unknown software; ON for FT8 / data. WSJT-X / MSHV: PTT method RTS.</li>
+        <li><b>Driver:</b> VariBeam D9 &rarr; 4.7 k &rarr; BC547 base, 47 k base&ndash;GND, emitter GND, collector &rarr; coil low end. Coil 12 V DPDT, 930 &Omega; (&asymp; 13 mA); 1N4148 across the coil, <b>band to +12 V</b>.</li>
+        <li><b>PTT ON/OFF switch</b> (SPST) in the coil +12 V feed: hard off for uploads / testing; ON for FT8 / data. TX timeout also in the VariBeam firmware.</li>
+        <li>VFO Nano D13 &rarr; 10 k &rarr; VariBeam D8: D8 HIGH &ge; 300 ms keys, LOW releases at once (D13 bootloader blinks &asymp; 100 ms are ignored).</li>
         <li>Transformers 600:600; PC side (pin 6) floating, radio side to the radio audio ground.</li>
       </ul>
     </div>

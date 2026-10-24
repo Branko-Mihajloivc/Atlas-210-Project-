@@ -299,7 +299,7 @@ tr.grp td { background: #f5f5f5; font-weight: 700; }
 <tr><td>10</td><td>A2</td><td>white</td><td>KEY line</td><td>1N4148 fitted <b>at the Nano end</b> (band to the KEY line), well insulated &mdash; the white wire carries +13 V</td></tr>
 <tr><td>11</td><td>A7</td><td>blue</td><td>S3 network</td><td>network &rarr; <b>orange</b> to CAL (1N4148 + 47 k), <b>white/black</b> to +CW (1N4148 + 22 k), 10 k to GND</td></tr>
 <tr class="grp"><td colspan="5">Output / supply</td></tr>
-<tr><td>12</td><td>D13</td><td>white/red</td><td>spare (KEY line / J4 area)</td><td><b>Not for PTT</b>: the bootloader blinks D13 on every reset. PTT is from the adapter RTS through the PTT relay + PTT ON/OFF switch (wiring sheet section 10). Leave open, label it</td></tr>
+<tr><td>12</td><td>D13</td><td>white/red</td><td>VariBeam Nano D8 (through 10 k)</td><td>PTT request from CAT. VariBeam keys only after 300 ms HIGH (bootloader blinks ignored), drives D9 &rarr; BC547 &rarr; PTT relay (wiring sheet section 10)</td></tr>
 <tr class="grp"><td colspan="5">RF</td></tr>
 <tr><td>13</td><td>Si5351 CLK2</td><td>thin coax</td><td>old PC-820 cal injection point</td><td>leave the receiver end open for now; later 1&ndash;2 pF or 47 k in series</td></tr>
 </table>
