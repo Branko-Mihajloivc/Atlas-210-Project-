@@ -43,6 +43,12 @@
   Button: click = CF / BW mode, double click = next preset (SSB / SSB NARROW / CW /
   DIGI), triple click = screen mode (OFF / DIM / ALWAYS ON, saved), hold 2 s = resync.
 
+  2026-10 PTT: the VFO Nano raises D13 on a CAT TX command; it arrives here on D8
+  (through 10 k). D8 must stay HIGH for PTT_DELAY_MS before D9 keys the PTT relay
+  (BC547), so the VFO Nano bootloader blinks on D13 (~100 ms) are ignored. D8 LOW
+  releases at once. After TX_TIMEOUT_MS the PTT drops and the OLED shows TX TIMEOUT
+  until the request goes away.
+
   VB filter (from the SOTABEAMS notes):
   Center frequency 200-3500 Hz: steps 25 Hz up to 2000, 50 Hz above.
   Bandwidth 200-3500 Hz: steps 20 Hz up to 400, 50 Hz up to 700, 100 Hz above.
@@ -63,6 +69,8 @@
 #define CONTRAST_NORMAL 0x80      /*OLED contrast in use*/
 #define CONTRAST_DIM 0x00         /*OLED contrast in DIM mode*/
 #define SKIRT_PX 6                /*width of the sloped filter skirts in the graph*/
+#define PTT_DELAY_MS 300          /*TX request must stay HIGH this long before keying*/
+#define TX_TIMEOUT_MS 180000UL    /*PTT dropped after 3 minutes; release the request to re-arm*/
 
 /*Presets (double click cycles through them). Values must be VB step values:
   CF 25 Hz steps up to 2000 / 50 Hz above; BW 20 Hz up to 400, 50 Hz up to 700, 100 Hz above*/
@@ -85,6 +93,8 @@ uint8_t presetIndex = NUM_PRESETS - 1;   /*first double click selects presets[0]
 #define emulatedEncoderPinA 5     /*to VB encoder input A*/
 #define emulatedEncoderPinB 6     /*to VB encoder input B*/
 #define emulatedEncoderSwPin 7    /*to VB button input*/
+#define pttRequestPin 8           /*from VFO Nano D13 (10 k, 47 k to GND): HIGH = CAT TX*/
+#define pttOutPin 9               /*to the BC547 base (4.7 k): HIGH = PTT relay on*/
 
 /*SSD1306: the charge pump (SSD1306_SWITCHCAPVCC) must be enabled or the panel stays dark.
   setContrast() added for the DIM screen mode.*/
@@ -116,11 +126,64 @@ unsigned long lastChange = 0;
 bool displayOn = true;
 bool unsavedChange = false;
 
+/******************** PTT state ****************/
+enum pttStates { PTT_IDLE, PTT_ARMING, PTT_TX, PTT_TIMEOUT };
+pttStates pttState = PTT_IDLE;
+unsigned long pttSince = 0;
+
+/***********************************************************/
+/* PTT: called from loop() and from the stepping helpers,  */
+/* so a long resync never holds the transmitter on         */
+/***********************************************************/
+void servicePtt()
+{
+  bool request = digitalRead(pttRequestPin) == HIGH;
+  unsigned long now = millis();
+
+  switch (pttState)
+  {
+    case PTT_IDLE:
+      if (request)
+      {
+        pttState = PTT_ARMING;
+        pttSince = now;
+      }
+      break;
+    case PTT_ARMING:
+      if (!request)
+        pttState = PTT_IDLE;            /*short pulse (bootloader blink): ignore*/
+      else if (now - pttSince >= PTT_DELAY_MS)
+      {
+        digitalWrite(pttOutPin, HIGH);
+        pttState = PTT_TX;
+        pttSince = now;
+      }
+      break;
+    case PTT_TX:
+      if (!request)
+      {
+        digitalWrite(pttOutPin, LOW);
+        pttState = PTT_IDLE;
+      }
+      else if (now - pttSince >= TX_TIMEOUT_MS)
+      {
+        digitalWrite(pttOutPin, LOW);
+        pttState = PTT_TIMEOUT;
+      }
+      break;
+    case PTT_TIMEOUT:
+      if (!request)
+        pttState = PTT_IDLE;            /*request released: armed again*/
+      break;
+  }
+}
+
 /***********************************************************/
 /* Emulate one VB encoder step (four gray code states)     */
 /***********************************************************/
 void vbStepEmulation(VBencoderRotationDirs encoderDir)
 {
+  servicePtt();
   if (encoderDir == CW)
   {
     digitalWrite(emulatedEncoderPinA, HIGH);
@@ -148,6 +211,7 @@ void vbStepEmulation(VBencoderRotationDirs encoderDir)
 /* Emulate one VB button press: toggles CF / BW mode on the VB */
 void vbClickEmulation()
 {
+  servicePtt();
   digitalWrite(emulatedEncoderSwPin, LOW);
   delay(CLICK_MS);
   digitalWrite(emulatedEncoderSwPin, HIGH);
@@ -311,10 +375,13 @@ void displayStatus()
   display.print(F("BW "));
   display.print(dspCurrentBW);
 
-  /*passband edges, centered*/
+  /*passband edges, centered (TX TIMEOUT in its place while the PTT is locked out)*/
   display.setTextSize(1);
   char buf[16];
-  snprintf(buf, sizeof(buf), "%d-%d Hz", lo, hi);
+  if (pttState == PTT_TIMEOUT)
+    strcpy_P(buf, PSTR("TX TIMEOUT"));
+  else
+    snprintf(buf, sizeof(buf), "%d-%d Hz", lo, hi);
   display.setCursor((128 - 6 * (int)strlen(buf)) / 2, 36);
   display.print(buf);
 
@@ -567,6 +634,9 @@ void checkVbEncoder()
 /***********************************************************/
 void setup()
 {
+  digitalWrite(pttOutPin, LOW);             /*PTT off before anything else*/
+  pinMode(pttOutPin, OUTPUT);
+  pinMode(pttRequestPin, INPUT);            /*no pull-up: 47 k to GND + VFO Nano D13 LED*/
   digitalWrite(emulatedEncoderPinA, LOW);   /*emulated encoder rest state*/
   digitalWrite(emulatedEncoderPinB, HIGH);
   digitalWrite(emulatedEncoderSwPin, HIGH);
@@ -621,8 +691,22 @@ void setup()
 /***********************************************************/
 void loop()
 {
+  static bool timeoutShown = false;
+
+  servicePtt();
   checkVbEncoder();
   checkButton();
+
+  /*TX TIMEOUT on the OLED while locked out, normal line back when released*/
+  bool timedOut = (pttState == PTT_TIMEOUT);
+  if (timedOut != timeoutShown)
+  {
+    timeoutShown = timedOut;
+    wakeDisplay();
+    displayStatus();
+  }
+  if (timedOut)
+    lastActivity = millis();             /*keep the message visible*/
 
   if (unsavedChange && millis() - lastChange >= SAVE_AFTER_MS)
     saveSettings();
