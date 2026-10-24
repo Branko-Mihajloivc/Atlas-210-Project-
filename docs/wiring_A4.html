@@ -283,7 +283,7 @@
         <tr><td class="c">2</td><td>Nano TX D1 (green) &rarr; adapter RX</td></tr>
         <tr><td class="c">3</td><td>Nano RX D0 (white) &larr; adapter TX</td></tr>
         <tr><td class="c">4</td><td>GND (black, chassis / Nano GND)</td></tr>
-        <tr><td class="c">5</td><td>Audio in (PC &rarr; TX): transformer &rarr; 47 k / 470 &Omega; &rarr; PC-200 pin 17 (mic in, MIC gain controls it)</td></tr>
+        <tr><td class="c">5</td><td>Audio in (PC &rarr; TX): transformer &rarr; 47 k / 470 &Omega; &rarr; PTT relay <b>NO</b> &rarr; COM &rarr; PC-200 pin 17 (MIC gain controls it)</td></tr>
         <tr><td class="c">6</td><td>Audio GND, PC side &mdash; <b>floating</b>, open to chassis</td></tr>
         <tr><td class="c">7</td><td>Audio out (RX &rarr; PC): PC-300 pin 22 &rarr; 1 &micro;F &rarr; 10 k &rarr; transformer (AF gain has no effect)</td></tr>
         <tr><td class="c">8</td><td>spare (PTT is now CAT &rarr; Nano, section 10)</td></tr>
@@ -303,7 +303,7 @@
         <li>CLK2 on only in S3 CAL (A7 sense) or from the menu &mdash; off otherwise (a running CLK2 can add spurs).</li>
         <li>100 kHz-style markers or an exact carrier (e.g. 14.100.000). With a GPSDO 1PPS the Nano can calibrate CORR automatically.</li>
       </ul>
-      <h2>10. Data audio + PC PTT relay <span class="tag">proposal</span></h2>
+      <h2>10. Data audio + PTT relay <span class="tag">proposal</span></h2>
       <svg viewBox="0 0 330 182" aria-label="Data audio and PC PTT relay">
         <text x="2" y="14">PC-300 pin 22</text>
         <line class="w" x1="62" y1="11" x2="76" y2="11"/>
@@ -330,7 +330,7 @@
         <polyline class="w" points="86,59 86,63 81,66 91,70 81,74 91,78 86,81 86,84"/>
         <text x="58" y="78">470 &Omega;</text>
         <line class="w" x1="78" y1="84" x2="94" y2="84"/><line class="w" x1="82" y1="88" x2="90" y2="88"/>
-        <text x="2" y="62">PC-200 pin 17</text>
+        <text x="2" y="62">to PTT relay NO</text>
         <line class="w" x1="150" y1="78" x2="135" y2="78"/><text x="120" y="96">audio GND</text>
         <text x="2" y="120">+12 V</text>
         <line class="w" x1="30" y1="117" x2="36" y2="117"/><circle class="w" cx="38" cy="117" r="1.6"/><line class="w" x1="40" y1="116" x2="52" y2="109"/><circle class="w" cx="54" cy="117" r="1.6"/><line class="w" x1="56" y1="117" x2="60" y2="117"/><text x="24" y="104">PTT ON/OFF</text>
@@ -342,16 +342,16 @@
         <line class="w" x1="100" y1="143" x2="112" y2="143"/>
         <line class="w" x1="104" y1="143" x2="118" y2="143"/><line class="w" x1="118" y1="138" x2="118" y2="148"/><line class="w" x1="121" y1="140" x2="121" y2="146"/>
         <text x="126" y="146">GND (contact 1, NO)</text>
-        <text x="2" y="172">mic hot</text>
-        <line class="w" x1="40" y1="169" x2="70" y2="169"/>
+        <text x="2" y="172">PC-200 p17</text>
+        <line class="w" x1="60" y1="169" x2="70" y2="169"/>
         <circle class="w" cx="72" cy="169" r="1.6"/><line class="w" x1="74" y1="169" x2="96" y2="169"/><circle class="w" cx="98" cy="169" r="1.6"/>
         <line class="w" x1="100" y1="169" x2="112" y2="169"/>
-        <text x="116" y="172">mic amp (contact 2, NC)</text>
+        <text x="116" y="172">contact 2: COM; NC mic, NO PC audio</text>
         <line class="w" x1="80" y1="126" x2="80" y2="164" stroke-dasharray="2 2"/>
       </svg>
       <ul>
         <li>Out from PC-300 pin 22: after the AGC, before AF gain and VariBeam &rarr; level independent of the volume knob.</li>
-        <li>In at PC-200 pin 17 (mic input): the MIC gain knob sets the PC level. 47 k / 470 &Omega; = line to mic level.</li>
+        <li>Pole 2 selects the PC-200 pin 17 (mic input) source: <b>COM</b> = PC-200 pin 17, <b>NC</b> = mic (from the mic socket), <b>NO</b> = PC audio (47 k / 470 &Omega; = line to mic level). RX / mic PTT: mic only; CAT TX: PC audio only. MIC gain sets both levels. Shields joined past the relay, unshielded ends &le; 2 cm.</li>
         <li>DPDT relay (e.g. Finder 30.22, 16 mA) + flyback diode: PC PTT keys the radio <b>and</b> opens the mic line. Mic PTT unchanged.</li>
         <li><b>PTT relay board wires:</b> <b>yellow</b> = VariBeam D9, <b>red</b> = +12 V (through PTT ON/OFF), <b>grey</b> = GND, <b>white</b> = PTT to the KEY line.</li>
         <li><b>Driver:</b> VariBeam D9 &rarr; 4.7 k &rarr; BC547 base, 47 k base&ndash;GND, emitter GND, collector &rarr; coil low end. Coil 12 V DPDT, 930 &Omega; (&asymp; 13 mA); 1N4148 across the coil, <b>band to +12 V</b>.</li>
