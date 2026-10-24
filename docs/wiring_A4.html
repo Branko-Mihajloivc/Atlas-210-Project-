@@ -353,6 +353,7 @@
         <li>Out from PC-300 pin 22: after the AGC, before AF gain and VariBeam &rarr; level independent of the volume knob.</li>
         <li>In at PC-200 pin 17 (mic input): the MIC gain knob sets the PC level. 47 k / 470 &Omega; = line to mic level.</li>
         <li>DPDT relay (e.g. Finder 30.22, 16 mA) + flyback diode: PC PTT keys the radio <b>and</b> opens the mic line. Mic PTT unchanged.</li>
+        <li><b>PTT relay board wires:</b> <b>yellow</b> = VariBeam D9, <b>red</b> = +12 V (through PTT ON/OFF), <b>grey</b> = GND, <b>white</b> = PTT to the KEY line.</li>
         <li><b>Driver:</b> VariBeam D9 &rarr; 4.7 k &rarr; BC547 base, 47 k base&ndash;GND, emitter GND, collector &rarr; coil low end. Coil 12 V DPDT, 930 &Omega; (&asymp; 13 mA); 1N4148 across the coil, <b>band to +12 V</b>.</li>
         <li><b>PTT ON/OFF switch</b> (SPST) in the coil +12 V feed: hard off for uploads / testing; ON for FT8 / data. TX timeout also in the VariBeam firmware.</li>
         <li>VFO Nano D13 &rarr; 10 k &rarr; VariBeam D8: D8 HIGH &ge; 300 ms keys, LOW releases at once (D13 bootloader blinks &asymp; 100 ms are ignored).</li>
