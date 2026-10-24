@@ -85,7 +85,7 @@
         <tr><td>D4</td><td>free</td><td>AGC fast switch sense</td></tr>
         <tr><td>D5</td><td>free</td><td>ATT relay sense</td></tr>
         <tr><td>D6</td><td>STEP button</td><td>PRE relay sense (STEP &rarr; A6)</td></tr>
-        <tr><td>D13</td><td>free</td><td>CAT PTT &rarr; NPN (wire run)</td></tr>
+        <tr><td>D13</td><td>spare</td><td>wire run; <b>not for PTT</b> (bootloader blinks D13)</td></tr>
         <tr><td>A6</td><td>free (analog)</td><td>STEP, MENU + MODE rocker</td></tr>
         <tr><td>A7</td><td>free (analog)</td><td>S3 position: CW / CAL sense</td></tr>
               </table>
@@ -292,7 +292,7 @@
       <ul>
         <li>Old wires (2&ndash;3 jumper, 5 +8.5 V, 6 stub, 7 T line, 8 +13 V fused) removed, GND on 4 kept. Check REC / SSB TX / CW after.</li>
         <li>USB-TTL adapter outside. Audio via 600:600 transformers, shielded, away from the serial pair. RX audio from PC-300 pin 22 (before the VariBeam).</li>
-        <li>PTT now: PC grounds pin 8 (adapter RTS via NPN/opto). Later CAT PTT: D13 &rarr; 4.7 k &rarr; NPN base (BC547, 47 k B&ndash;E), collector to KEY line, emitter GND (KEY line draws 2.1 mA). PTT on RTS, never DTR (resets the Nano). Debug serial off with CAT.</li>
+        <li>PTT = adapter <b>RTS</b> (via NPN/opto) grounds pin 8 &rarr; PTT relay (section 10). Never DTR (resets the Nano). <b>PTT ON/OFF switch OFF before every upload</b> &mdash; uploading toggles RTS and would key the radio. Not from D13: the bootloader blinks D13 on every reset. CAT (frequency / mode) still through the Nano; debug serial off with CAT.</li>
       </ul>
     </div>
     <div>
@@ -333,7 +333,7 @@
         <text x="2" y="62">PC-200 pin 17</text>
         <line class="w" x1="150" y1="78" x2="135" y2="78"/><text x="120" y="96">audio GND</text>
         <text x="2" y="120">+12 V</text>
-        <line class="w" x1="30" y1="117" x2="60" y2="117"/>
+        <line class="w" x1="30" y1="117" x2="36" y2="117"/><circle class="w" cx="38" cy="117" r="1.6"/><line class="w" x1="40" y1="116" x2="52" y2="109"/><circle class="w" cx="54" cy="117" r="1.6"/><line class="w" x1="56" y1="117" x2="60" y2="117"/><text x="24" y="104">PTT ON/OFF</text>
         <rect class="w" x="60" y="108" width="40" height="18"/><text x="64" y="121">coil</text>
         <line class="w" x1="100" y1="117" x2="130" y2="117"/><text x="134" y="120">J4 pin 8 (PC grounds it)</text>
         <text x="2" y="146">KEY line</text>
@@ -353,6 +353,7 @@
         <li>Out from PC-300 pin 22: after the AGC, before AF gain and VariBeam &rarr; level independent of the volume knob.</li>
         <li>In at PC-200 pin 17 (mic input): the MIC gain knob sets the PC level. 47 k / 470 &Omega; = line to mic level.</li>
         <li>DPDT relay (e.g. Finder 30.22, 16 mA) + flyback diode: PC PTT keys the radio <b>and</b> opens the mic line. Mic PTT unchanged.</li>
+        <li><b>PTT ON/OFF switch</b> (SPST, rear or front) in the relay coil +12 V feed: OFF before uploading firmware or opening the port with unknown software; ON for FT8 / data. WSJT-X / MSHV: PTT method RTS.</li>
         <li>Transformers 600:600; PC side (pin 6) floating, radio side to the radio audio ground.</li>
       </ul>
     </div>
