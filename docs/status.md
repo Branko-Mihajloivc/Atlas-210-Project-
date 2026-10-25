@@ -236,3 +236,5 @@ PTT plan (2026-10-24): CAT PTT through the VFO Nano (one USB cable): D13 -> 10 k
 PTT relay board wires (2026-10-24): yellow = VariBeam D9, red = +12 V (via PTT ON/OFF), grey = GND, white = PTT to the KEY line.
 PTT relay pole 2 = audio selector: COM -> PC-200 pin 17, NC = mic, NO = PC audio (T2 47 k / 470). RX / mic PTT: mic only; CAT TX: PC audio only.
 VariBeam PTT firmware written 2026-10-24 (not yet uploaded): D8 request (300 ms filter) -> D9 PTT, 3 min TX timeout with TX TIMEOUT on the OLED. Compiled: 21.3 KB flash (69%), 623 B globals + 1 KB OLED buffer (malloc) -> ~400 B RAM free. Recommended: 47 k D8 to GND.
+
+ATT/PRE wired in 2026-10-25 (RG-316: PC-800C OUT -> J1, J2 -> PC-100B pin 1, shield to pin 2 / PC-900C grounded edge). Quick test on noise/signals: ATT about -2 S units, PRE about +1 S unit. Detailed per-band test with the CLK2 marker later. CLK2 injection point found: PC-800C IN (S4D, RX side of the antenna relay, where the PC-820 output went) - CLK2 via 47 k, shield to ground there; PC-820 removed, its CAL supply wire insulated (tap kept for A7). Next: CLK2 coax, PA cleaning/maintenance, then reassembly and full tests.
