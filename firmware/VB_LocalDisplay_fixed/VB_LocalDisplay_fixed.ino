@@ -40,8 +40,8 @@
   - Screen after BLANK_AFTER_MS without use: OFF, DIM or ALWAYS ON (OLEDs make RF
     noise even when nothing changes). Turn the knob or press the button to wake it.
 
-  Button: click = CF / BW mode, double click = next preset (SSB / SSB NARROW / CW /
-  DIGI), triple click = screen mode (OFF / DIM / ALWAYS ON, saved), hold 2 s = resync.
+  Button: click = CF / BW mode, double click = next preset (SSB / SSB NARROW / CW),
+  triple click = screen mode (OFF / DIM / ALWAYS ON, saved), hold 2 s = resync.
 
   2026-10 PTT: the VFO Nano raises D13 on a CAT TX command; it arrives here on D8
   (through 10 k). D8 must stay HIGH for PTT_DELAY_MS before D9 keys the PTT relay
@@ -79,8 +79,7 @@ const Preset presets[] = {
   {"SSB",        1500, 2400},
   {"SSB NARROW", 1400, 1800},
   {"CW",          700,  500},
-  {"DIGI",       1500, 3000},
-};
+};   /*no DIGI preset: the PC audio is taken before the VB (PC-300 pin 22)*/
 const uint8_t NUM_PRESETS = sizeof(presets) / sizeof(presets[0]);
 uint8_t presetIndex = NUM_PRESETS - 1;   /*first double click selects presets[0]*/
 #define SAVE_AFTER_MS 5000UL      /*save to EEPROM this long after the last change*/

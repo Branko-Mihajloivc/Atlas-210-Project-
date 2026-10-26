@@ -55,7 +55,7 @@ Libraries: Adafruit GFX + Adafruit SH110X.
   OLED reset pin clash with the encoder switch, SH1106 column offset.
 - Splash screen and **resync at power on** (VariBeam driven to its minimum, then to the saved values),
   settings saved in EEPROM, passband edges + trapezoid passband graph.
-- Button: 1× CF/BW, 2× preset (SSB / SSB NARROW / CW / DIGI), 3× screen when idle (OFF / DIM /
+- Button: 1× CF/BW, 2× preset (SSB / SSB NARROW / CW), 3× screen when idle (OFF / DIM /
   ALWAYS ON — OLEDs make RF hash even when idle), hold 2 s = resync.
 
 ## Receiver work (summary)
