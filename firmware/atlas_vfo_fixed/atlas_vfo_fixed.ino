@@ -27,6 +27,11 @@
 //  - CW: the S3 CW position is sensed on A7 (CW_SENSE_FITTED). In CW the carrier (CLK1) moves
 //    CW_OFFSET_HZ into the crystal filter passband, like the original PC-500 did on +CW. CLK0 stays,
 //    so the carrier comes out 800 Hz above the dial on USB bands and below on LSB bands (as the Atlas).
+//  - Menu batch 2: S3 in CAL turns on CLK2 as a marker 1 kHz into the passband of the dial frequency
+//    (heard as a 1 kHz tone, follows the knob), injected at PC-800C IN through 47 k. CLK2 runs on
+//    PLLB (fractional multisynth), output high-Z when off. CAT: Kenwood TS-480 subset on the serial
+//    port (FA FB IF MD ID PS AI FR FT SM TX RX); TX raises D13 (to the VariBeam Nano PTT input,
+//    which keys only after 300 ms and has its own TX timeout). Menu: CAT on/off, CAT baud, CAL level.
 
 #include <si5351.h>
 #include <Wire.h>
@@ -46,8 +51,18 @@ struct settings2_t
     uint16_t cwOffsetHz;                    // CW carrier shift into the passband
     uint32_t defaultStep;                   // tuning step at power on
     uint8_t accel;                          // tuning acceleration 0 = off, 1 = low, 2 = high
+    // batch 2 (2026-10-26), valid when magic2 == SETTINGS2_MAGIC2
+    uint8_t catOn;                          // 1 = CAT on the serial port (debug output off)
+    uint8_t catBaud;                        // index into catBauds[]
+    uint8_t calDrive;                       // CLK2 drive 0..3 = 2 / 4 / 6 / 8 mA
+    uint8_t magic2;
 }
 settings2;
+#define SETTINGS2_MAGIC2 0xB1
+const uint32_t catBauds[] = {4800, 9600, 19200, 38400};
+#define DEBUG_BAUD   19200
+#define CAT_PTT_PIN  13                     // HIGH = CAT TX -> 10 k -> VariBeam Nano D8
+#define CAL_TONE_HZ  1000                   // CLK2 marker this far into the passband
 
 struct settings_t
 {
@@ -171,7 +186,13 @@ bool flagsDirty = true;                     // row 2 cols 0-3 (ATT / PRE) must b
 enum A6State : uint8_t { A6_NONE, A6_STEP, A6_MENU, A6_MODE };
 A6State a6Stable = A6_NONE;
 unsigned long menuDownSince = 0;
-bool calMode = false;                       // S3 in CAL (for later: CLK2 calibrator)
+bool calMode = false;                       // S3 in CAL: CLK2 marker on
+bool clk2On = false;
+uint64_t lastClk2 = 0;
+uint64_t bfoPllFreq = 0;                    // PLLB VCO in 0.01 Hz (CLK2 shares it)
+bool catTx = false;                         // CAT asked for TX (D13 HIGH)
+char catBuf[16];
+uint8_t catLen = 0;
 uint16_t s3Raw = 0;
 uint16_t loDivider = 0;                     // CLK0 output divider in use (even integer)
 
@@ -501,7 +522,12 @@ void updateS3()
     analogRead(S3_SENSE_IN);                // dummy read after switching the ADC channel
     s3Raw = analogRead(S3_SENSE_IN);
     bool cw = s3Raw >= S3_CW_MIN_RAW;
-    calMode = !cw && s3Raw >= S3_CAL_MIN_RAW;
+    bool cal = !cw && s3Raw >= S3_CAL_MIN_RAW;
+    if (cal != calMode)
+    {
+        calMode = cal;
+        changed_f = true;                   // CLK2 on / off
+    }
     // must read the same 3 times in a row before CW mode changes
     if (cw != cwMode)
     {
@@ -647,6 +673,39 @@ void updateSi5351()
             si5351.pll_reset(SI5351_PLLB);
         lastBfoDivider = dB;
         lastBfoSet = clk1;
+        bfoPllFreq = clk1 * dB;
+        lastClk2 = 0;                       // CLK2 divider depends on PLLB
+    }
+    updateClk2();
+}
+
+// CAL marker: CLK2 CAL_TONE_HZ into the passband (USB: above the dial, LSB: below), fractional
+// multisynth on PLLB. Off (high-Z) outside CAL and on TX.
+bool dialLsb()
+{
+    bool lsb = band[currentBand].ifPositive;     // Atlas: LSB on 80 / 40, USB on 20 / 15 / 10
+    return modeOpp ? !lsb : lsb;
+}
+
+void updateClk2()
+{
+    if (calMode && !txon && bfoPllFreq)
+    {
+        uint32_t f = dialLsb() ? vfo - CAL_TONE_HZ : vfo + CAL_TONE_HZ;
+        uint64_t f100 = (uint64_t)f * SI5351_FREQ_MULT;
+        if (f100 != lastClk2 || !clk2On)
+        {
+            si5351.set_freq_manual(f100, bfoPllFreq, SI5351_CLK2);
+            si5351.set_int(SI5351_CLK2, 0);
+            si5351.drive_strength(SI5351_CLK2, (si5351_drive)settings2.calDrive);
+            lastClk2 = f100;
+            clk2On = true;
+        }
+    }
+    else if (clk2On)
+    {
+        si5351.output_enable(SI5351_CLK2, 0);
+        clk2On = false;
     }
 }
 
@@ -847,13 +906,10 @@ void display_frequency()
         lcd.print(F("CW  "));
     else if (txon)
         lcd.print(F("TX  "));
+    else if (calMode)
+        lcd.print(F("CAL "));
     else
-    {
-        bool lsb = band[currentBand].ifPositive;     // Atlas: LSB on 80 / 40, USB on 20 / 15 / 10
-        if (modeOpp)
-            lsb = !lsb;
-        lcd.print(lsb ? F("LSB ") : F("USB "));
-    }
+        lcd.print(dialLsb() ? F("LSB ") : F("USB "));
     uint16_t mhz = f / 1000000UL;
     if (mhz < 10)
         lcd.print(' ');
@@ -921,7 +977,7 @@ void vfosteps()
 /*  MENU click / STEP double: next    */
 /*  hold STEP 2 s: save and exit      */
 /**************************************/
-#define MENU_ITEMS 6
+#define MENU_ITEMS 9
 const uint32_t stepList[] = {1, 10, 100, 1000, 10000};
 
 void saveSettings2()
@@ -985,6 +1041,16 @@ void runSetupMenu()
                 case 5:
                     settings2.accel = constrain((int8_t)settings2.accel + (s > 0 ? 1 : -1), 0, 2);
                     break;
+                case 6:
+                    settings2.catOn = !settings2.catOn;
+                    break;
+                case 7:
+                    settings2.catBaud = constrain((int8_t)settings2.catBaud + (s > 0 ? 1 : -1), 0, 3);
+                    break;
+                case 8:
+                    settings2.calDrive = constrain((int8_t)settings2.calDrive + (s > 0 ? 1 : -1), 0, 3);
+                    lastClk2 = 0;           // apply the new level if the marker is on
+                    break;
             }
             updateSi5351();                 // hear the change live
             redraw = true;
@@ -1013,6 +1079,9 @@ void runSetupMenu()
                     lcd.print(F("ACCEL: "));
                     lcd.print(settings2.accel == 0 ? F("OFF") : (settings2.accel == 1 ? F("LOW") : F("HIGH")));
                     break;
+                case 6: lcd.print(F("CAT: ")); lcd.print(settings2.catOn ? F("ON") : F("OFF")); break;
+                case 7: lcd.print(F("CAT BAUD:")); lcd.print(catBauds[settings2.catBaud]); break;
+                case 8: lcd.print(F("CAL LEVEL:")); lcd.print(2 + 2 * settings2.calDrive); lcd.print(F("mA")); break;
             }
             lcd.setCursor(0, 1);
             if (item <= 3)
@@ -1040,11 +1109,141 @@ void runSetupMenu()
     lcd.clear();
     radix = settings2.defaultStep;
     setupmenu = false;
+    startSerial();                          // CAT on / off or baud may have changed
+}
+
+/**************************************/
+/* CAT: Kenwood TS-480 subset         */
+/**************************************/
+void startSerial()
+{
+    Serial.end();
+    Serial.begin(settings2.catOn ? catBauds[settings2.catBaud] : DEBUG_BAUD);
+    catLen = 0;
+    if (!settings2.catOn)
+        setCatPtt(false);
+}
+
+void setCatPtt(bool on)
+{
+    if (calMode)                            // never key in the CAL position
+        on = false;
+    catTx = on;
+    digitalWrite(CAT_PTT_PIN, on ? HIGH : LOW);
+}
+
+uint8_t catMode()                           // 1 = LSB, 2 = USB, 3 = CW
+{
+    if (cwMode) return 3;
+    return dialLsb() ? 1 : 2;
+}
+
+void catFreq11(uint32_t f)
+{
+    char d[11];
+    for (int8_t i = 10; i >= 0; i--)
+    {
+        d[i] = '0' + f % 10;
+        f /= 10;
+    }
+    Serial.write(d, 11);
+}
+
+// S meter as TS-480 0..30 (S9 = 15, S9+60 = 30)
+uint8_t catSmeter()
+{
+    int db = constrain(smeterDb(smeterShownMv), 0, 114);
+    return db <= 54 ? (uint8_t)(db * 15 / 54) : (uint8_t)min(30, 15 + (db - 54) / 4);
+}
+
+void catCommand()
+{
+    catBuf[catLen] = 0;
+    char a = catBuf[0], b = catBuf[1];
+    bool query = (catLen == 2);
+    if (a == 'F' && (b == 'A' || b == 'B'))
+    {
+        if (query)
+        {
+            Serial.print('F'); Serial.print(b); catFreq11(vfo); Serial.print(';');
+        }
+        else if (b == 'A' && !txon)
+        {
+            uint32_t f = strtoul(catBuf + 2, NULL, 10);
+            if (f >= band[currentBand].minFreq && f <= band[currentBand].maxFreq)
+            {
+                vfo = f;                    // only inside the band the switch is on
+                rit_offset = 0;
+                lastTuneMillis = millis();
+                changed_f = true;
+            }
+        }
+    }
+    else if (a == 'I' && b == 'F')
+    {
+        Serial.print(F("IF"));
+        catFreq11(vfo);
+        Serial.print(F("00000+000000000"));
+        Serial.print((txon || catTx) ? '1' : '0');
+        Serial.print(catMode());
+        Serial.print(F("000000 ;"));
+    }
+    else if (a == 'M' && b == 'D')
+    {
+        if (query) { Serial.print(F("MD")); Serial.print(catMode()); Serial.print(';'); }
+        // mode set ignored: the sideband is the band / MODE rocker, CW is S3
+    }
+    else if (a == 'T' && b == 'X')
+        setCatPtt(true);
+    else if (a == 'R' && b == 'X')
+        setCatPtt(false);
+    else if (a == 'I' && b == 'D')
+        Serial.print(F("ID020;"));
+    else if (a == 'P' && b == 'S')
+    {
+        if (query) Serial.print(F("PS1;"));
+    }
+    else if (a == 'A' && b == 'I')
+    {
+        if (query) Serial.print(F("AI0;"));
+    }
+    else if ((a == 'F' && (b == 'R' || b == 'T')))
+    {
+        if (query) { Serial.print('F'); Serial.print(b); Serial.print(F("0;")); }
+    }
+    else if (a == 'S' && b == 'M')
+    {
+        uint8_t v = catSmeter();
+        Serial.print(F("SM00"));
+        if (v < 10) Serial.print('0');
+        Serial.print(v);
+        Serial.print(';');
+    }
+    else
+        Serial.print(F("?;"));
+}
+
+void serviceCat()
+{
+    while (Serial.available())
+    {
+        char c = Serial.read();
+        if (c == ';')
+        {
+            if (catLen >= 2)
+                catCommand();
+            catLen = 0;
+        }
+        else if (c >= ' ' && catLen < sizeof(catBuf) - 1)
+            catBuf[catLen++] = (c >= 'a' && c <= 'z') ? c - 32 : c;
+    }
 }
 
 void setup()
 {
-    Serial.begin(19200);
+    digitalWrite(CAT_PTT_PIN, LOW);          // no CAT TX at power on
+    pinMode(CAT_PTT_PIN, OUTPUT);
+    Serial.begin(DEBUG_BAUD);
     pinMode(BAND_SELECT_IN, INPUT);
     pinMode(BTN_IN, INPUT);
     pinMode(TX_BTN, INPUT_PULLUP);
@@ -1091,6 +1290,14 @@ void setup()
         settings2.cwOffsetHz = CW_OFFSET_HZ;
         settings2.defaultStep = 10;
         settings2.accel = 1;
+        settings2.magic2 = 0;
+    }
+    if (settings2.magic2 != SETTINGS2_MAGIC2)    // batch 2 fields: defaults, batch 1 values kept
+    {
+        settings2.catOn = 0;
+        settings2.catBaud = 1;               // 9600
+        settings2.calDrive = 0;              // 2 mA
+        settings2.magic2 = SETTINGS2_MAGIC2;
         saveSettings2();
     }
     radix = settings2.defaultStep;
@@ -1117,6 +1324,8 @@ void setup()
     corrPpb = (int32_t)settings.fcorrection * 10L;
     si5351.set_ms_source(SI5351_CLK0, SI5351_PLLA);   // LO
     si5351.set_ms_source(SI5351_CLK1, SI5351_PLLB);   // BFO / carrier, own PLL
+    si5351.set_ms_source(SI5351_CLK2, SI5351_PLLB);   // CAL marker shares the BFO PLL
+    si5351.set_clock_disable(SI5351_CLK2, SI5351_CLK_DISABLE_HI_Z);   // off = high-Z (D5 tap)
     si5351.output_enable(SI5351_CLK2, 0);
     si5351.drive_strength(SI5351_CLK0, SI5351_DRIVE_2MA); //you can set this to 2MA, 4MA, 6MA or 8MA
     si5351.drive_strength(SI5351_CLK1, SI5351_DRIVE_2MA); //be careful though - measure into 50ohms
@@ -1133,6 +1342,8 @@ void setup()
         runSetupMenu();
 
     txon = !digitalRead(TX_BTN);
+    if (settings2.catOn)
+        startSerial();
     lcd.clear();
     smeterLastBars = -1;             // force the S meter line to be drawn
     flagsDirty = true;
@@ -1211,9 +1422,16 @@ void loop()
     if (vfo != settings.vfo && millis() - lastTuneMillis > SAVE_DELAY_MS)
         saveSettings();
 
+    if (catTx && calMode)
+        setCatPtt(false);
+
+    if (settings2.catOn)
+        serviceCat();
 #if DEBUG_SERIAL
     // Serial is quiet unless asked: the status line runs out through J4 and the USB cable and is
     // heard as ticking on 15 / 10 m. '?' = one status line, 'D' = continuous lines on / off.
+    else
+    {
     while (Serial.available())
     {
         char c = Serial.read();
@@ -1226,6 +1444,7 @@ void loop()
     {
         lastDebug = millis();
         printStatus();
+    }
     }
 #endif
 }
