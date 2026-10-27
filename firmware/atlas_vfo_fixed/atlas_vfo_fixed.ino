@@ -188,6 +188,7 @@ A6State a6Stable = A6_NONE;
 unsigned long menuDownSince = 0;
 bool calMode = false;                       // S3 in CAL: CLK2 marker on
 bool clk2On = false;
+bool clk2PinOff = false;                     // debug 'M': CLK2 divider runs, output pin off (leak test)
 uint64_t lastClk2 = 0;
 uint64_t bfoPllFreq = 0;                    // PLLB VCO in 0.01 Hz (CLK2 shares it)
 bool catTx = false;                         // CAT asked for TX (D13 HIGH)
@@ -698,6 +699,7 @@ void updateClk2()
             si5351.set_freq_manual(f100, bfoPllFreq, SI5351_CLK2);
             si5351.set_int(SI5351_CLK2, 0);
             si5351.drive_strength(SI5351_CLK2, (si5351_drive)settings2.calDrive);
+            si5351.output_enable(SI5351_CLK2, clk2PinOff ? 0 : 1);
             lastClk2 = f100;
             clk2On = true;
         }
@@ -1439,6 +1441,13 @@ void loop()
             printStatus();
         else if (c == 'D' || c == 'd')
             debugStream = !debugStream;
+        else if (c == 'M' || c == 'm')
+        {
+            clk2PinOff = !clk2PinOff;
+            if (clk2On)
+                si5351.output_enable(SI5351_CLK2, clk2PinOff ? 0 : 1);
+            Serial.println(clk2PinOff ? F("CLK2 pin OFF") : F("CLK2 pin ON"));
+        }
     }
     if (debugStream && millis() - lastDebug >= DEBUG_PERIOD_MS)
     {
