@@ -146,7 +146,7 @@
         <tr><td>MODE rocker (OPP)</td><td>22 k</td><td class="c">703</td><td class="c">480&ndash;860</td></tr>
         <tr><td>nothing</td><td>&mdash;</td><td class="c">1023</td><td class="c">&gt; 860</td></tr>
       </table>
-      <div class="note">A6/A7 have <b>no internal pull-up</b> &rarr; the external 10 k is required. MODE is latching (NORM / OPP like the original S1): its state is taken while no button is pressed. 5&nbsp;% resistors fine.</div>
+      <div class="note">A6/A7 have <b>no internal pull-up</b> (external 10 k required). MODE (NORM / OPP sideband, BFO 5.520.0 &harr; 5.523.3 MHz) latches; read while no button is pressed.</div>
       <h2>6. S3 CW / CAL sense on A7 <span class="tag">proposal</span></h2>
       <svg viewBox="0 0 330 74" aria-label="CW and CAL sense on A7">
         <text x="4" y="14">+CW</text>
@@ -176,7 +176,6 @@
         <tr><td>CAL</td><td class="c">&asymp; 2.1 V</td><td>CLK2 calibrator on</td></tr>
         <tr><td>REC / TRANS</td><td class="c">0 V</td><td>normal</td></tr>
       </table>
-      <div class="note">MODE rocker NORM / OPP = sideband as the Atlas S1: software only (BFO to the other side of the crystal filter, 5.520.0 &harr; ~5.523.3 MHz, LO follows).</div>
     </div>
 
     <!-- ATT + AGC -->
@@ -221,15 +220,15 @@
       </svg>
       <ul>
         <li>Coil high end on +12 V, the rocker switches the coil low end to GND (ATT or PRE, centre = NORM). The 1N4148 (band to the coil) passes the LOW to the Nano pin and blocks the +12 V when off.</li>
-        <li>DPDT signal relays: both poles switch the RF (in and out). &pi;-pad 68 / 150 / 68 &Omega; &asymp; 16 dB (20 dB: 62 / 240 / 62 &Omega;). Full board: preamp_bfg135.pdf.</li>
+        <li>DPDT relays switch the RF in and out. &pi;-pad 68 / 150 / 68 &Omega; &asymp; 16 dB (measured 17.5). Board: attpre_assembly.pdf.</li>
         <li><span class="warn">Only in the receive line after the antenna relay &mdash; never in the TX path.</span> Short leads / thin coax.</li>
+        <li><b>Preamp supply:</b> +12 V &rarr; BD140 (10 k E&ndash;B, B &rarr; 4.7 k &rarr; K2 coil low end, back = C insulated) &rarr; 78L08 &rarr; J3 +. Q1 runs only in PRE, at 8 V / 22 mA.</li>
       </ul>
 
       <h2>5. AGC fast/slow &mdash; DPDT rocker, sense D4 <span class="tag">proposal</span></h2>
       <ul>
-        <li>2N7000 at PC-300D: gate via 100 &Omega; from the rocker (+12 V), 100 k gate&ndash;GND, source GND, drain via R<sub>fast</sub> (~150&ndash;330 k, to try) to the AGC hold node on PC-300D.</li>
-        <li>Parts on PC-300D to be identified by value first (hold cap / 1 M discharge R).</li>
-        <li>Sense: <b>DPDT rocker</b> &mdash; 2nd pole common to GND, &ldquo;fast&rdquo; throw to D4 (INPUT_PULLUP, LOW = fast). No divider.</li>
+        <li>2N7000 at PC-300D: gate 100 &Omega; from the rocker (+12 V), 100 k gate&ndash;GND, drain via R<sub>fast</sub> (~150&ndash;330 k) to the AGC hold node.</li>
+                <li>Sense: <b>DPDT rocker</b> &mdash; 2nd pole common to GND, &ldquo;fast&rdquo; throw to D4 (INPUT_PULLUP, LOW = fast). No divider.</li>
       </ul>
 
     </div>
@@ -287,7 +286,7 @@
         <tr><td class="c">6</td><td>Audio GND, PC side &mdash; <b>floating</b>, open to chassis</td></tr>
         <tr><td class="c">7</td><td>Audio out (RX &rarr; PC): PC-300 pin 22 &rarr; 1 &micro;F &rarr; 10 k &rarr; transformer (AF gain has no effect)</td></tr>
         <tr><td class="c">8</td><td>spare (PTT is now CAT &rarr; Nano, section 10)</td></tr>
-        <tr><td class="c">9</td><td>spare (planned: GPSDO 1PPS for AUTO CAL &mdash; on hold, section 9)</td></tr>
+        <tr><td class="c">9</td><td>spare (the 1PPS for AUTO CAL goes by an internal cable to D6, section 9)</td></tr>
       </table>
       <ul>
         <li>Old wires (2&ndash;3 jumper, 5 +8.5 V, 6 stub, 7 T line, 8 +13 V fused) removed, GND on 4 kept. Check REC / SSB TX / CW after.</li>
@@ -296,46 +295,51 @@
       </ul>
     </div>
     <div>
-      <h2>9. Calibrator &mdash; Si5351 CLK2 <span class="tag">CLK2 wired</span></h2>
-      <svg viewBox="0 0 330 150" aria-label="CLK2 injection, marker attenuator and AUTO CAL">
-        <text x="2" y="14">CLK2 coax (from VFO box)</text>
-        <line class="w" x1="2" y1="22" x2="90" y2="22"/>
-        <circle class="f" cx="70" cy="22" r="2"/>
-        <polyline class="w" points="90,22 93,16 99,28 105,16 111,28 114,22" stroke-dasharray="3 2"/>
-        <text x="92" y="40">1 k*</text>
-        <line class="w" x1="114" y1="22" x2="150" y2="22"/>
-        <circle class="f" cx="140" cy="22" r="2"/>
-        <line class="w" x1="140" y1="22" x2="140" y2="30"/>
-        <polyline class="w" points="140,30 135,33 145,39 135,45 145,51 140,54" stroke-dasharray="3 2"/>
-        <line class="w" x1="132" y1="58" x2="148" y2="58"/><line class="w" x1="135" y1="61" x2="145" y2="61"/>
-        <text x="150" y="50">4.7 &Omega;*</text>
-        <line class="w" x1="150" y1="22" x2="170" y2="22"/>
-        <polyline class="w" points="170,22 173,16 179,28 185,16 191,28 194,22"/>
-        <text x="172" y="40">47 k</text>
-        <line class="w" x1="194" y1="22" x2="236" y2="22"/><text x="240" y="25">PC-800C IN (S4D)</text>
-        <text x="2" y="58">shield: GND at S4D</text>
-        <line class="w" x1="70" y1="22" x2="70" y2="70" stroke-dasharray="3 2"/>
-        <polyline class="w" points="70,70 65,73 75,79 65,85 75,91 70,94" stroke-dasharray="3 2"/>
-        <text x="78" y="86">1 k (AUTO CAL)</text>
-        <line class="w" x1="70" y1="94" x2="70" y2="106" stroke-dasharray="3 2"/>
-        <line class="w" x1="40" y1="106" x2="236" y2="106"/><circle class="f" cx="70" cy="106" r="2"/>
-        <text x="2" y="109">grey D5</text><text x="240" y="109">K1 sense diode</text>
-        <line class="w" x1="40" y1="122" x2="236" y2="122"/>
-        <text x="2" y="125">red D6</text><text x="240" y="125">K2 sense diode</text>
-        <text x="2" y="145">J4 pin 9 (1PPS)</text>
-        <line class="w" x1="80" y1="142" x2="96" y2="142" stroke-dasharray="3 2"/>
-        <polyline class="w" points="96,142 99,136 105,148 111,136 117,148 120,142" stroke-dasharray="3 2"/>
-        <line class="w" x1="120" y1="142" x2="150" y2="142" stroke-dasharray="3 2"/>
-        <line class="w" x1="150" y1="122" x2="150" y2="142" stroke-dasharray="3 2"/><circle class="f" cx="150" cy="122" r="2"/>
-        <text x="160" y="146">1 k (AUTO CAL)</text>
+      <h2>9. Calibrator &mdash; Si5351 CLK2 <span class="tag">wired 2026-10-28</span></h2>
+      <svg viewBox="0 0 330 134" aria-label="CLK2 through the shielded CAL box to the ATT/PRE input, AUTO CAL cables">
+        <text x="40" y="8">CAL box: copper, lid + foil soldered to GND</text>
+        <rect class="w" x="36" y="12" width="160" height="64" stroke-dasharray="4 2"/>
+        <text x="2" y="28">CLK2</text><text x="2" y="46">coax</text>
+        <line class="w" x1="2" y1="34" x2="48" y2="34"/>
+        <circle class="f" cx="48" cy="34" r="2"/>
+        <line class="w" x1="48" y1="34" x2="56" y2="34"/>
+        <polyline class="w" points="56,34 59,28 65,40 71,28 77,40 80,34"/>
+        <text x="60" y="24">1 k</text>
+        <line class="w" x1="80" y1="34" x2="112" y2="34"/>
+        <circle class="f" cx="100" cy="34" r="2"/>
+        <line class="w" x1="100" y1="34" x2="100" y2="42"/>
+        <polyline class="w" points="100,42 95,45 105,50 95,55 105,60 100,62"/>
+        <line class="w" x1="92" y1="66" x2="108" y2="66"/><line class="w" x1="95" y1="69" x2="105" y2="69"/>
+        <text x="108" y="56">2 &times; 10 &Omega;</text>
+        <polyline class="w" points="112,34 115,28 121,40 127,28 133,40 136,34"/>
+        <text x="114" y="24">4.7 k</text>
+        <line class="w" x1="136" y1="34" x2="250" y2="34"/>
+        <text x="254" y="31">ATT/PRE J1</text><text x="254" y="41">(input pad)</text>
+        <line class="w" x1="48" y1="34" x2="48" y2="42"/>
+        <polyline class="w" points="48,42 43,45 53,50 43,55 53,60 48,62"/>
+        <text x="56" y="56">1 k</text>
+        <line class="w" x1="48" y1="62" x2="48" y2="78"/>
+        <circle class="w" cx="48" cy="80" r="2"/>
+        <line class="w" x1="60" y1="76" x2="60" y2="78"/><circle class="w" cx="60" cy="80" r="2"/>
+        <text x="66" y="84">header: tap + GND</text>
+        <line class="w" x1="48" y1="82" x2="48" y2="104" stroke-dasharray="3 2"/>
+        <line class="w" x1="48" y1="104" x2="236" y2="104" stroke-dasharray="3 2"/>
+        <text x="56" y="100">D5 cable: plain wire (the 1 k is in the box)</text>
+        <text x="240" y="107">grey D5 (K1 sense)</text>
+        <text x="2" y="121">GPSDO 1PPS</text>
+        <line class="w" x1="56" y1="124" x2="100" y2="124" stroke-dasharray="3 2"/>
+        <polyline class="w" points="100,124 103,118 109,130 115,118 121,130 124,124" stroke-dasharray="3 2"/>
+        <text x="128" y="118">1 k at the D6 end</text>
+        <line class="w" x1="124" y1="124" x2="236" y2="124" stroke-dasharray="3 2"/>
+        <text x="240" y="127">red D6 (K2 sense)</text>
       </svg>
-      <div class="note">Solid = wired. Dashed = not wired (on hold). * = marker attenuator: today the coax goes straight to the 47 k; the 1 k* is cut in there, the 4.7 &Omega;* goes from the 1 k / 47 k joint to GND.</div>
+      <div class="note">Solid = wired. Dashed = removable AUTO CAL cables, plugged in only to calibrate. Coax shield soldered to the box at the entry.</div>
       <ul>
-        <li><b>Wired 2026-10-26:</b> CLK2 coax centre &rarr; 47 k &rarr; PC-800C IN (S4D, where the PC-820 output went = RX side of the antenna relay, cut off on TX), shield to GND there. PC-820 removed, its CAL supply wire insulated.</li>
-        <li>Firmware (uploaded): S3 in CAL &rarr; LCD "CAL", CLK2 = dial &plusmn; 1 kHz (1 kHz tone, follows the knob), off + high-Z outside CAL and on TX. Menu CAL LEVEL 2&ndash;8 mA.</li>
-        <li><b>Marker too strong:</b> &asymp; S9+40 (&minus;33 dBm) at 2 mA. A bigger series R does not help (&asymp; 0.2 pF across it). <b>Attenuator (on hold):</b> coax centre &rarr; 1 k &rarr; 4.7 &Omega; to GND &rarr; 47 k &asymp; 46 dB less &rarr; about S7&ndash;S8. Firmware alternative (no soldering): CAL OFFSET menu that moves the marker into the crystal-filter skirt.</li>
-        <li><b>Calibration now = zero beat</b> (no wiring): CLK2 at 10.000 000 MHz (<b>firmware still to add</b>: a CAL FREQ menu item), FTdx10 on 10 MHz hears the GPSDO 10 MHz and CLK2 (short wire near the coax), adjust CORR until the beat stops.</li>
-        <li><b>AUTO CAL (on hold, not wired):</b> 1 k from the coax centre to a tap on the grey D5 wire (Timer1 counter), J4 pin 9 &rarr; 1 k &rarr; tap on the red D6 wire (1PPS). Rocker in NOR, CLK2 2.5 MHz counted over 10 PPS s (&asymp; 0.04 ppm). Plug the 1PPS in only to calibrate (it idles LOW &rarr; LCD would show PRE).</li>
+        <li><b>Injection at the ATT/PRE board input</b> (J1, before the relays), so the marker also checks ATT and PRE. S4D is free again. At S4D the bare hot end of the coax radiated into the PC-800C input coil (S9+30 even unconnected); in the closed box the leak is &asymp; S9.</li>
+        <li><b>Measured</b> (14.175 marker, peak): &minus;43 dBm; ATT &minus;17.5 dB; PRE +7.5 dB. The 2 &times; 10 &Omega; must be checked by meter (MID&ndash;GND 5 &Omega;): a mismarked pair read 100 &Omega;.</li>
+        <li>Header pins stay bare, or under a grounded cap that touches neither pin. <span class="warn">Never jumper tap to GND</span> (the current loop outside the box radiates).</li>
+        <li><b>Firmware:</b> S3 in CAL &rarr; LCD "CAL" and the S-meter line in dBm. MENU short press = marker on/off ("MRK"); OFF at power on and when S3 leaves CAL. Fixed marker on the nearest point: 3.500 / 3.650 / 3.800, 7.000 / 7.100 / 7.200, 14.000 / 14.175 / 14.350, 21.000 / 21.225 / 21.450, 28.500 / 29.000 / 29.500 MHz. Zero beat at the dial = marker, peak &asymp; 1.2 kHz off (USB: dial below, LSB: above).</li>
+        <li><b>AUTO CAL</b> (menu, STEP = start): rocker on <b>NOR</b>, both cables in, GPSDO locked. CLK2 2.5 MHz counted on D5 over 10 PPS s (1 count = 0.04 ppm), corrected, counted again: "E: error R: rest" in ppb. Click = keep, knob = undo; hold STEP 2 s = save, hold MENU 2 s = no save. "NO PPS (D6)" / "NO CLK2 (D5)" = nothing changed. Unplug afterwards (1PPS idles LOW &rarr; LCD would show PRE).</li>
       </ul>
       <h2>10. Data audio + PTT relay <span class="tag">proposal</span></h2>
       <svg viewBox="0 0 330 182" aria-label="Data audio and PC PTT relay">
