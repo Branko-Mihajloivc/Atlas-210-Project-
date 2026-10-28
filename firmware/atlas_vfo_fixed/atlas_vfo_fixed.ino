@@ -32,6 +32,12 @@
 //    PLLB (fractional multisynth), output high-Z when off. CAT: Kenwood TS-480 subset on the serial
 //    port (FA FB IF MD ID PS AI FR FT SM TX RX); TX raises D13 (to the VariBeam Nano PTT input,
 //    which keys only after 300 ms and has its own TX timeout). Menu: CAT on/off, CAT baud, CAL level.
+//  - CAL batch 3: marker injected at the ATT/PRE board input (shielded 1 k / 5 ohm / 4.7 k box). Menu
+//    CAL MARKER (always OFF at power on): fixed marker like a crystal calibrator on the start /
+//    middle / end point of the band nearest to the dial (peaks as it is tuned through). In CAL the S meter line shows dBm. Menu AUTO CAL: CLK2 2.5 MHz counted on D5
+//    (Timer1 T1) between GPSDO 1PPS edges on D6, correction applied, checked once more.
+//    S3 in CAL: MENU short press = marker on / off ("MRK" on the LCD), off again when S3 leaves CAL.
+//    Menu: hold MENU 2 s = leave without saving (all values back as they were).
 
 #include <si5351.h>
 #include <Wire.h>
@@ -62,7 +68,9 @@ settings2;
 const uint32_t catBauds[] = {4800, 9600, 19200, 38400};
 #define DEBUG_BAUD   19200
 #define CAT_PTT_PIN  13                     // HIGH = CAT TX -> 10 k -> VariBeam Nano D8
-#define CAL_TONE_HZ  1000                   // CLK2 marker this far into the passband
+#define AUTOCAL_HZ       2500000UL          // CLK2 for AUTO CAL, counted on D5 (T1, max ~6 MHz)
+#define AUTOCAL_SECONDS  10                 // gate: 10 PPS seconds = 25 000 000 counts, 1 count = 40 ppb
+#define AUTOCAL_TIMEOUT_LOOPS 3000000UL     // no PPS edge for ~2-4 s (polling loop ~1 us)
 
 struct settings_t
 {
@@ -188,6 +196,7 @@ A6State a6Stable = A6_NONE;
 unsigned long menuDownSince = 0;
 bool calMode = false;                       // S3 in CAL: CLK2 marker on
 bool clk2On = false;
+bool calMarker = false;                     // menu CAL MARKER, not saved: OFF at every power on
 bool clk2PinOff = false;                     // debug 'M': CLK2 divider runs, output pin off (leak test)
 uint64_t lastClk2 = 0;
 uint64_t bfoPllFreq = 0;                    // PLLB VCO in 0.01 Hz (CLK2 shares it)
@@ -268,6 +277,14 @@ Band band[] = {
     {"20", 13800000UL, 14650000UL, 14100000UL, false},
     {"15", 20800000UL, 21650000UL, 21250000UL, false},
     {"10", 28200000UL, 29600000UL, 28900000UL, false}};
+
+// CAL marker points in kHz (start / middle / end of each band, same order as band[])
+const uint16_t calPointsKhz[5][3] = {
+    {3500, 3650, 3800},
+    {7000, 7100, 7200},
+    {14000, 14175, 14350},
+    {21000, 21225, 21450},
+    {28500, 29000, 29500}};
 const uint8_t NUM_BANDS = sizeof band / sizeof band[0];
 
 // Band switch thresholds on A3 (ladder gives about 0 / 255 / 512 / 768 / 1023)
@@ -527,6 +544,8 @@ void updateS3()
     if (cal != calMode)
     {
         calMode = cal;
+        if (!cal)
+            calMarker = false;              // the marker never stays on outside CAL
         changed_f = true;                   // CLK2 on / off
     }
     // must read the same 3 times in a row before CW mode changes
@@ -680,20 +699,31 @@ void updateSi5351()
     updateClk2();
 }
 
-// CAL marker: CLK2 CAL_TONE_HZ into the passband (USB: above the dial, LSB: below), fractional
-// multisynth on PLLB. Off (high-Z) outside CAL and on TX.
+// CAL marker: CLK2 fixed on the CAL point nearest to the dial, fractional multisynth on PLLB.
+// Off (high-Z) outside CAL, with CAL MARKER off and on TX.
 bool dialLsb()
 {
     bool lsb = band[currentBand].ifPositive;     // Atlas: LSB on 80 / 40, USB on 20 / 15 / 10
     return modeOpp ? !lsb : lsb;
 }
 
+uint32_t nearestCalPoint()
+{
+    uint32_t best = 0, bestD = 0xFFFFFFFFUL;
+    for (uint8_t i = 0; i < 3; i++)
+    {
+        uint32_t p = (uint32_t)calPointsKhz[currentBand][i] * 1000UL;
+        uint32_t d = (vfo > p) ? vfo - p : p - vfo;
+        if (d < bestD) { bestD = d; best = p; }
+    }
+    return best;
+}
+
 void updateClk2()
 {
-    if (calMode && !txon && bfoPllFreq)
+    if (calMode && calMarker && !txon && bfoPllFreq)
     {
-        uint32_t f = dialLsb() ? vfo - CAL_TONE_HZ : vfo + CAL_TONE_HZ;
-        uint64_t f100 = (uint64_t)f * SI5351_FREQ_MULT;
+        uint64_t f100 = (uint64_t)nearestCalPoint() * SI5351_FREQ_MULT;
         if (f100 != lastClk2 || !clk2On)
         {
             si5351.set_freq_manual(f100, bfoPllFreq, SI5351_CLK2);
@@ -799,6 +829,26 @@ void display_smeter(int sigMv)
     }
 }
 
+// CAL: row 2 cols 4-15 show the level in dBm instead of the bar (S0 = -127 dBm, the meter does
+// not move below about -90 dBm). Redrawn at most every 300 ms and only when the value changes.
+void display_dbm(int sigMv)
+{
+    static int lastDbm = 0;
+    static unsigned long lastDraw = 0;
+    int db = constrain(smeterDb(sigMv), 0, 114);
+    int dbm = (db < 37) ? -90 : db - 127;
+    bool force = smeterLastBars >= -1;      // bar was on the LCD, or a redraw was asked for
+    if (!force && (dbm == lastDbm || millis() - lastDraw < 300))
+        return;
+    lastDbm = dbm;
+    lastDraw = millis();
+    smeterLastBars = -3;                    // the bar must be drawn again after CAL
+    lcd.setCursor(4, 1);
+    lcd.print(db < 37 ? F(" <") : F("  "));
+    lcd.print(dbm);
+    lcd.print(F(" dBm   "));
+}
+
 // Row 2 cols 0-3: ATT / PRE / blank
 void display_flags2()
 {
@@ -852,7 +902,10 @@ void updateSmeter()
         smeterShownMv = smeterDiffMv;
     else
         smeterShownMv -= (smeterShownMv - smeterDiffMv + SMETER_DECAY - 1) / SMETER_DECAY;
-    display_smeter(smeterShownMv);
+    if (calMode)
+        display_dbm(smeterShownMv);
+    else
+        display_smeter(smeterShownMv);
 }
 
 void display_rit()
@@ -909,7 +962,7 @@ void display_frequency()
     else if (txon)
         lcd.print(F("TX  "));
     else if (calMode)
-        lcd.print(F("CAL "));
+        lcd.print(calMarker ? F("MRK ") : F("CAL "));
     else
         lcd.print(dialLsb() ? F("LSB ") : F("USB "));
     uint16_t mhz = f / 1000000UL;
@@ -978,9 +1031,160 @@ void vfosteps()
 /*  STEP click   : change step size   */
 /*  MENU click / STEP double: next    */
 /*  hold STEP 2 s: save and exit      */
+/*  hold MENU 2 s: exit, no saving    */
 /**************************************/
-#define MENU_ITEMS 9
+#define MENU_ITEMS 11
 const uint32_t stepList[] = {1, 10, 100, 1000, 10000};
+
+/**************************************/
+/* AUTO CAL with a GPSDO 1PPS         */
+/**************************************/
+// CLK2 (AUTOCAL_HZ) -> CAL box 1 k -> D5 = Timer1 external clock (T1), GPSDO 1PPS -> 1 k -> D6.
+// Rocker on NOR, so the ATT / PRE sense diodes do not clamp D5 / D6. Counting runs with interrupts
+// off (no millis, no encoder) and polls D6, so an edge is caught within one loop (~1 us = 2-3 counts).
+// Returns 0 = OK, 1 = no PPS, 2 = no / wrong CLK2 count.
+uint8_t countClk2(uint32_t *count)
+{
+    uint8_t oldA = TCCR1A, oldB = TCCR1B, oldMask = TIMSK1;
+    TIMSK1 = 0;
+    TCCR1A = 0;
+    TCCR1B = 0;
+    TCNT1 = 0;
+    TIFR1 = _BV(TOV1);
+    TCCR1B = _BV(CS12) | _BV(CS11) | _BV(CS10);   // clock on T1 rising edge
+    uint8_t sreg = SREG;
+    cli();
+    uint32_t ovf = 0, start = 0, idle = 0;
+    uint8_t edges = 0, status = 0;
+    bool last = PIND & _BV(6);
+    while (true)
+    {
+        if (TIFR1 & _BV(TOV1))
+        {
+            TIFR1 = _BV(TOV1);
+            ovf++;
+        }
+        bool now = PIND & _BV(6);
+        if (now && !last)                   // PPS rising edge
+        {
+            uint16_t t = TCNT1;
+            uint32_t o = ovf;
+            if ((TIFR1 & _BV(TOV1)) && t < 0x8000)
+                o++;                        // overflow just happened, not counted yet
+            uint32_t stamp = (o << 16) | t;
+            if (edges == 0)
+                start = stamp;
+            else if (edges == AUTOCAL_SECONDS)
+            {
+                *count = stamp - start;
+                break;
+            }
+            edges++;
+            idle = 0;
+        }
+        last = now;
+        if (++idle > AUTOCAL_TIMEOUT_LOOPS)
+        {
+            status = 1;
+            break;
+        }
+    }
+    SREG = sreg;
+    TCCR1B = 0;
+    TCCR1A = oldA;
+    TCCR1B = oldB;
+    TIMSK1 = oldMask;
+    uint32_t expected = AUTOCAL_HZ * AUTOCAL_SECONDS;
+    if (status == 0 && (*count < expected - expected / 2000 || *count > expected + expected / 2000))
+        status = 2;                         // more than 500 ppm off = not CLK2
+    return status;
+}
+
+void setCorrection(int32_t corr)
+{
+    si5351.set_correction(corr, SI5351_PLL_INPUT_XO);
+    corrPpb = corr;
+    lastBfoSet = 0;                         // both PLLs must be calculated again
+    loDivider = 0;
+    updateSi5351();
+}
+
+void startAutoCalClk2()
+{
+    si5351.set_freq_manual((uint64_t)AUTOCAL_HZ * SI5351_FREQ_MULT, bfoPllFreq, SI5351_CLK2);
+    si5351.set_int(SI5351_CLK2, 0);
+    si5351.drive_strength(SI5351_CLK2, SI5351_DRIVE_8MA);
+    si5351.output_enable(SI5351_CLK2, 1);
+    clk2On = true;                          // so updateClk2 switches it off afterwards
+    lastClk2 = 0;
+}
+
+// One measurement: error in ppb (count against AUTOCAL_HZ), or status 1 / 2
+uint8_t autoCalPass(int32_t *errPpb)
+{
+    lcd.setCursor(0, 1);
+    lcd.print(F("COUNTING 10 s   "));
+    uint32_t count = 0;
+    uint8_t st = countClk2(&count);
+    if (st == 0)
+    {
+        int64_t expected = (int64_t)AUTOCAL_HZ * AUTOCAL_SECONDS;
+        *errPpb = (int32_t)(((int64_t)count - expected) * 1000000000LL / expected);
+    }
+    return st;
+}
+
+// Measure, correct, measure again. STEP click = keep, knob = undo. Returns the correction to use.
+int32_t autoCal(int32_t corr)
+{
+    int32_t oldCorr = corr, err1 = 0, err2 = 0;
+    lcd.clear();
+    lcd.print(F("AUTO CAL  NOR!"));
+    startAutoCalClk2();
+    delay(200);
+    uint8_t st = autoCalPass(&err1);
+    if (st == 0)
+    {
+        corr = constrain(corr + err1, -300000L, 300000L);   // crystal high by err -> correction + err
+        setCorrection(corr);
+        startAutoCalClk2();
+        delay(200);
+        st = autoCalPass(&err2);
+    }
+    si5351.output_enable(SI5351_CLK2, 0);
+    lastClk2 = 0;
+    lcd.clear();
+    if (st != 0)
+    {
+        lcd.print(st == 1 ? F("NO PPS (D6)") : F("NO CLK2 (D5)"));
+        lcd.setCursor(0, 1);
+        lcd.print(F("CORR unchanged"));
+        if (corr != oldCorr)
+            setCorrection(oldCorr);
+        delay(3000);
+        return oldCorr;
+    }
+    lcd.print(F("E:"));
+    lcd.print(err1);
+    lcd.print(F(" R:"));
+    lcd.print(err2);
+    lcd.setCursor(0, 1);
+    lcd.print(F("click=OK turn=NO"));
+    takeEncoderSteps();
+    while (true)
+    {
+        if (checkButton() == 1)
+            return corr;
+        if (takeEncoderSteps())
+        {
+            setCorrection(oldCorr);
+            lcd.clear();
+            lcd.print(F("CORR unchanged"));
+            delay(1500);
+            return oldCorr;
+        }
+    }
+}
 
 void saveSettings2()
 {
@@ -1006,6 +1210,12 @@ void runSetupMenu()
     uint8_t item = 0;
     bool redraw = true;
     bool menuWasDown = false;
+    unsigned long menuPressedAt = 0;
+    bool cancel = false;
+    settings2_t oldSettings2 = settings2;   // for leaving without saving
+    uint32_t oldBfo = bfo;
+    int32_t oldCorr = corr;
+    bool oldMarker = calMarker;
     radix = 100;
 
     while (true)
@@ -1053,18 +1263,23 @@ void runSetupMenu()
                     settings2.calDrive = constrain((int8_t)settings2.calDrive + (s > 0 ? 1 : -1), 0, 3);
                     lastClk2 = 0;           // apply the new level if the marker is on
                     break;
+                case 9:
+                    calMarker = !calMarker;
+                    break;
             }
             updateSi5351();                 // hear the change live
             redraw = true;
         }
 
         int b = checkButton();
-        if (b == 1) { vfosteps(); redraw = true; }
+        if (b == 1 && item == 10) { corr = autoCal(corr); redraw = true; }
+        else if (b == 1) { vfosteps(); redraw = true; }
         if (b == 2) { item = (item + 1) % MENU_ITEMS; redraw = true; }
         if (b == 3) break;
         bool menuDown = (a6Stable == A6_MENU);
-        if (menuDown && !menuWasDown) { item = (item + 1) % MENU_ITEMS; redraw = true; }
+        if (menuDown && !menuWasDown) { item = (item + 1) % MENU_ITEMS; redraw = true; menuPressedAt = millis(); }
         menuWasDown = menuDown;
+        if (menuDown && millis() - menuPressedAt >= 2000) { cancel = true; break; }
 
         if (redraw)
         {
@@ -1084,6 +1299,8 @@ void runSetupMenu()
                 case 6: lcd.print(F("CAT: ")); lcd.print(settings2.catOn ? F("ON") : F("OFF")); break;
                 case 7: lcd.print(F("CAT BAUD:")); lcd.print(catBauds[settings2.catBaud]); break;
                 case 8: lcd.print(F("CAL LEVEL:")); lcd.print(2 + 2 * settings2.calDrive); lcd.print(F("mA")); break;
+                case 9: lcd.print(F("CAL MARKER: ")); lcd.print(calMarker ? F("ON") : F("OFF")); break;
+                case 10: lcd.print(F("AUTO CAL")); break;
             }
             lcd.setCursor(0, 1);
             if (item <= 3)
@@ -1092,21 +1309,37 @@ void runSetupMenu()
                 lcd.print(F("STEP:"));
                 lcd.print(item == 2 ? min(radix, 1000UL) : (item == 3 ? min(radix, 100UL) : radix));
             }
+            else if (item == 10)
+                lcd.print(F("STEP=start"));
             else
                 lcd.print(F("turn knob"));
-            lcd.setCursor(13, 1);
+            lcd.setCursor(item >= 9 ? 11 : 12, 1);
             lcd.print(item + 1);
             lcd.print('/');
             lcd.print(MENU_ITEMS);
         }
     }
 
-    settings.bfo_offset = (int32_t)bfo;
-    settings.fcorrection = (int)(corr / 10L);
-    saveSettings();
-    saveSettings2();
     lcd.clear();
-    lcd.print(F("SAVED"));
+    if (cancel)
+    {
+        settings2 = oldSettings2;
+        bfo = oldBfo;
+        calMarker = oldMarker;
+        setCorrection(oldCorr);             // also programs both PLLs with the old BFO
+        lcd.print(F("NOT SAVED"));
+        while (readA6() < A6_MENU_MAX)      // wait for MENU release (no menu again from loop)
+            ;
+        a6Stable = A6_NONE;                 // no stale MENU (would count as a short press in CAL)
+    }
+    else
+    {
+        settings.bfo_offset = (int32_t)bfo;
+        settings.fcorrection = (int)(corr / 10L);
+        saveSettings();
+        saveSettings2();
+        lcd.print(F("SAVED"));
+    }
     delay(1000);
     lcd.clear();
     radix = settings2.defaultStep;
@@ -1413,7 +1646,16 @@ void loop()
         }
     }
     else
+    {
+        // S3 in CAL: a short MENU press (released to no button) turns the marker on / off
+        if (menuDownSince != 0 && calMode && (a6Stable == A6_NONE || a6Stable == A6_MODE) &&
+            millis() - menuDownSince >= 50)
+        {
+            calMarker = !calMarker;
+            changed_f = true;
+        }
         menuDownSince = 0;
+    }
 
     int b = checkButton();
     if (b == 1) clickEvent();
