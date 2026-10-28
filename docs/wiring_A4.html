@@ -341,7 +341,7 @@
         <li><b>Firmware:</b> S3 in CAL &rarr; LCD "CAL" and the S-meter line in dBm. MENU short press = marker on/off ("MRK"); OFF at power on and when S3 leaves CAL. Fixed marker on the nearest point: 3.500 / 3.650 / 3.800, 7.000 / 7.100 / 7.200, 14.000 / 14.175 / 14.350, 21.000 / 21.225 / 21.450, 28.500 / 29.000 / 29.500 MHz. Zero beat at the dial = marker, peak &asymp; 1.2 kHz off (USB: dial below, LSB: above).</li>
         <li><b>AUTO CAL</b> (menu, STEP = start): rocker on <b>NOR</b>, both cables in, GPSDO locked. CLK2 2.5 MHz counted on D5 over 10 PPS s (1 count = 0.04 ppm), corrected, counted again: "E: error R: rest" in ppb. Click = keep, knob = undo; hold STEP 2 s = save, hold MENU 2 s = no save. "NO PPS (D6)" / "NO CLK2 (D5)" = nothing changed. Unplug afterwards (1PPS idles LOW &rarr; LCD would show PRE).</li>
       </ul>
-      <h2>10. Data audio + PTT relay <span class="tag">proposal</span></h2>
+      <h2>10. Data audio + PTT relay <span class="tag">built, CAT PTT tested 2026-10-28</span></h2>
       <svg viewBox="0 0 330 182" aria-label="Data audio and PC PTT relay">
         <text x="2" y="14">PC-300 pin 22</text>
         <line class="w" x1="62" y1="11" x2="76" y2="11"/>
@@ -371,7 +371,7 @@
         <text x="2" y="62">to PTT relay NO</text>
         <line class="w" x1="150" y1="78" x2="135" y2="78"/><text x="120" y="96">audio GND</text>
         <text x="2" y="120">+12 V</text>
-        <line class="w" x1="30" y1="117" x2="36" y2="117"/><circle class="w" cx="38" cy="117" r="1.6"/><line class="w" x1="40" y1="116" x2="52" y2="109"/><circle class="w" cx="54" cy="117" r="1.6"/><line class="w" x1="56" y1="117" x2="60" y2="117"/><text x="24" y="104">PTT ON/OFF</text>
+        <line class="w" x1="30" y1="117" x2="60" y2="117"/>
         <rect class="w" x="60" y="108" width="40" height="18"/><text x="64" y="121">coil</text>
         <line class="w" x1="100" y1="117" x2="130" y2="117"/><text x="134" y="120">BC547 collector (VariBeam D9)</text>
         <text x="2" y="146">KEY line</text>
@@ -391,10 +391,10 @@
         <li>Out from PC-300 pin 22: after the AGC, before AF gain and VariBeam &rarr; level independent of the volume knob.</li>
         <li>Pole 2 selects the PC-200 pin 17 (mic input) source: <b>COM</b> = PC-200 pin 17, <b>NC</b> = mic (from the mic socket), <b>NO</b> = PC audio (47 k / 470 &Omega; = line to mic level). RX / mic PTT: mic only; CAT TX: PC audio only. MIC gain sets both levels. Shields joined past the relay, unshielded ends &le; 2 cm.</li>
         <li>DPDT relay (e.g. Finder 30.22, 16 mA) + flyback diode: PC PTT keys the radio <b>and</b> opens the mic line. Mic PTT unchanged.</li>
-        <li><b>PTT relay board wires:</b> <b>yellow</b> = VariBeam D9, <b>red</b> = +12 V (through PTT ON/OFF), <b>grey</b> = GND, <b>white</b> = PTT to the KEY line.</li>
+        <li><b>PTT relay board wires:</b> <b>yellow</b> = VariBeam D9, <b>red</b> = +12 V, <b>grey</b> = GND, <b>white</b> = PTT to the KEY line.</li>
         <li><b>Driver:</b> VariBeam D9 &rarr; 4.7 k &rarr; BC547 base, 47 k base&ndash;GND, emitter GND, collector &rarr; coil low end. Coil 12 V DPDT, 930 &Omega; (&asymp; 13 mA); 1N4148 across the coil, <b>band to +12 V</b>.</li>
-        <li><b>PTT ON/OFF switch</b> (SPST) in the coil +12 V feed: hard off for uploads / testing; ON for FT8 / data. TX timeout also in the VariBeam firmware.</li>
-        <li>VFO Nano D13 &rarr; 10 k &rarr; VariBeam D8: D8 HIGH &ge; 300 ms keys, LOW releases at once (D13 bootloader blinks &asymp; 100 ms are ignored).</li>
+        <li><b>No PTT switch</b> (not fitted, not needed): CAT OFF in the VFO menu or S3 in CAL blocks CAT TX, the VariBeam drops the PTT after 3 min, and the 300 ms filter ignores the bootloader blinks.</li>
+        <li>VFO Nano D13 &rarr; 10 k &rarr; VariBeam D8: D8 HIGH &ge; 300 ms keys, LOW releases at once (D13 bootloader blinks &asymp; 100 ms are ignored). Keying delay &asymp; 0.3 s &rarr; MSHV / WSJT-X Tx delay &asymp; 0.5 s.</li>
         <li>Transformers 600:600; PC side (pin 6) floating, radio side to the radio audio ground.</li>
       </ul>
     </div>
