@@ -263,3 +263,4 @@ VFO batch 3 uploaded 2026-10-28: CAL marker fixed on the nearest band point (80:
 STEP button sometimes acts as MENU in the menu also on single presses - likely STEP switch contact resistance (> ~1 k reads as MENU on the A6 ladder); left as is for now.
 Marker dBm check 2026-10-28 (14.175 marker, peak): NOR -43 dBm, ATT -60.5 dBm (~-17.5 dB, pi-pad design ~16 dB), PRE -35.5 dBm (~+7.5 dB at 8 V / 22 mA).
 VariBeam PTT firmware uploaded 2026-10-28 (DIGI preset gone: SSB / NARROW / CW). CAT PTT from MSHV works into the dummy load, keying ~0.3 s late (300 ms filter) -> MSHV Tx delay ~0.5 s. No PTT ON/OFF switch fitted (not needed: CAT OFF / S3 CAL / 3 min timeout); wiring sheet section 10 updated.
+Plan 2026-10-28: 10 m low power / LO level check moved to the very end of the project.
