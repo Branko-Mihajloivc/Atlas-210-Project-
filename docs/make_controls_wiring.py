@@ -199,20 +199,26 @@ text(1000, 385, 'common', 10)
 text(1000, 418, '(centre = NORM)', 10)
 text(240, 337, 'D5 sense wire', 11, 'middle')
 text(240, 437, 'D6 sense wire', 11, 'middle')
+text(240, 361, '(AUTO CAL: + CLK2 tap cable)', 10, 'middle')
+text(240, 461, '(AUTO CAL: + GPSDO 1PPS via 1 k)', 10, 'middle')
+text(500, 474, 'PRE coil low end also: 4.7 k → BD140 base (preamp supply, only in PRE)', 10)
 
 # ---------------- 3. AGC (DPDT rocker) ----------------
 text(300, 492, '3. AGC fast / slow  (DPDT rocker at the front, 2nd pole tells the Nano)', 12, 'start', True)
-# pole 1: +12 V to the AGC circuit
-text(1062, 513, '+12 V', 11, 'end')
+# top pole 2 (fast throw = D4), bottom pole 1 (fast throw pulls the BC547 base low); both commons GND
 E.append('<circle cx="1000" cy="510" r="3" fill="none" stroke="#111"/>')
 E.append('<circle cx="940" cy="510" r="3" fill="none" stroke="#111"/>')
-line(1003, 510, 1022, 510)
+line(1003, 510, 1015, 510)
+gnd(1015, 510)
 line(943, 510, 995, 496, 1.4)
-line(937, 510, 700, 510)
-line(700, 510, 700, 575)
-E.append('<rect x="560" y="575" width="230" height="44" rx="4" fill="none" stroke="#111" stroke-width="1.2"/>')
-text(675, 593, '2N7000 at PC-300D: gate via 100 Ω,', 10, 'middle')
-text(675, 609, '100 k gate–GND, drain via R fast to hold node', 10, 'middle')
+line(937, 550, 700, 550)
+line(700, 550, 700, 575)
+text(820, 545, 'base wire (pole 1)', 10)
+text(820, 505, 'pole 2', 10)
+E.append('<rect x="520" y="575" width="270" height="60" rx="4" fill="none" stroke="#111" stroke-width="1.2"/>')
+text(655, 591, 'BC547 at PC-300D: C → C311 (22 µF) −, E → GND,', 10, 'middle')
+text(655, 606, 'base 10 k → pin 2 (+13.7 V). 2.2 µF node B → GND fixed.', 10, 'middle')
+text(655, 621, 'SLOW: BC547 on, C311 in. FAST: base to GND, C311 out.', 10, 'middle')
 # pole 2: common GND, "fast" throw to D4 (INPUT_PULLUP, LOW = fast)
 E.append('<circle cx="1000" cy="550" r="3" fill="none" stroke="#111"/>')
 E.append('<circle cx="940" cy="550" r="3" fill="none" stroke="#111"/>')
@@ -220,10 +226,10 @@ line(943, 550, 995, 536, 1.4)
 line(1003, 550, 1030, 550)
 gnd(1030, 550)
 line(968, 503, 968, 543, 1.0, '3 3')
-text(1010, 540, 'fast', 10)
-line(170, 545, 690, 545)
-line(690, 545, 690, 550)
-line(690, 550, 937, 550)
+text(940, 528, 'fast', 10, 'middle')
+line(170, 545, 600, 545)
+line(600, 545, 600, 510)
+line(600, 510, 937, 510)
 text(300, 537, 'D4 sense wire (orange) — no divider', 11, 'middle')
 
 # ---------------- 4. A2 TX ----------------
@@ -271,12 +277,12 @@ tr.grp td { background: #f5f5f5; font-weight: 700; }
 @media screen { body { background: #ccc; } .page { background: #fff; padding: 8mm; margin: 6mm auto; } }
 </style></head><body><div class="page">
 <h1>Atlas 210X &mdash; VFO Nano buttons, rockers, relays and sense wires</h1>
-<div class="sub">YT3CT &middot; 2026-10 &middot; proposal &middot; diode band = cathode. Parts at the source end, plain wires to the Nano (5 V or less).</div>
+<div class="sub">YT3CT &middot; as built 2026-10-29 &middot; diode band = cathode. Parts at the source end, plain wires to the Nano (5 V or less).</div>
 ''' + svg + '''
 <ul>
 <li>From the Nano to the front / relays: <b>A6, GND, D4, D5, D6</b>. A6 readings: STEP 0, MENU &asymp; 184 (170 with MODE), MODE alone &asymp; 700, nothing 1023. A2 goes to the KEY line, A7 to the S3 network. The +12 V comes from the radio, never from the Nano.</li>
-<li>D5 / D6 / A2: Nano internal pull-up, LOW = on. D6 becomes PRE sense only after STEP has moved to A6. Relay contacts (RF in / out of the &pi;-pad and preamp) are not shown.</li>
-<li>A7: CW &asymp; 3.8 V, CAL &asymp; 2.1 V, REC / TRANS 0 V. Set CW_SENSE_FITTED 1 in the sketch once this network is wired.</li>
+<li>D5 / D6 / A2 / D4: Nano internal pull-up, LOW = on. For AUTO CAL (rocker on NOR) two removable cables join D5 (CLK2 tap from the CAL box, plain wire) and D6 (GPSDO 1PPS, 1 k at the D6 end); unplug them afterwards. Relay contacts (RF in / out of the &pi;-pad and preamp) are not shown.</li>
+<li>A7: CW &asymp; 3.8 V, CAL &asymp; 2.1 V, REC / TRANS 0 V. CW_SENSE_FITTED 1 in the sketch (wired 2026-10-23).</li>
 </ul>
 </div>
 <div class="page pb">
@@ -293,18 +299,18 @@ tr.grp td { background: #f5f5f5; font-weight: 700; }
 <tr><td>5</td><td>A6</td><td>green</td><td>STEP / MENU buttons, MODE rocker</td><td>10 k pull-up A6&ndash;5 V at the Nano; STEP 0 &Omega;, MENU 2.2 k, MODE (OPP) 22 k + 100 nF at the front</td></tr>
 <tr><td>6</td><td>GND</td><td>twisted with green</td><td>buttons / MODE common</td><td>also the ATT/PRE rocker common</td></tr>
 <tr class="grp"><td colspan="5">Sense inputs (Nano only listens, 5 V or less on the wire)</td></tr>
-<tr><td>7</td><td>D5</td><td>grey</td><td>ATT relay coil low end</td><td>1N4148, band to the coil</td></tr>
-<tr><td>8</td><td>D6</td><td>red</td><td>PRE relay coil low end</td><td>1N4148, band to the coil (after STEP moved to A6)</td></tr>
-<tr><td>9</td><td>D4</td><td>orange</td><td>AGC rocker 2nd pole</td><td>DPDT: 2nd pole common = GND, &ldquo;fast&rdquo; throw = D4. No divider</td></tr>
+<tr><td>7</td><td>D5</td><td>grey</td><td>ATT relay coil low end</td><td>1N4148, band to the coil. AUTO CAL: CLK2 tap cable joins here</td></tr>
+<tr><td>8</td><td>D6</td><td>red</td><td>PRE relay coil low end</td><td>1N4148, band to the coil. AUTO CAL: GPSDO 1PPS cable (1 k at the D6 end) joins here</td></tr>
+<tr><td>9</td><td>D4</td><td>orange</td><td>AGC rocker 2nd pole</td><td>DPDT: 2nd pole common = GND, &ldquo;fast&rdquo; throw = D4. No divider. Pole 1 (same wiring) grounds the BC547 base on PC-300D &mdash; never join the two poles</td></tr>
 <tr><td>10</td><td>A2</td><td>white</td><td>KEY line</td><td>1N4148 fitted <b>at the Nano end</b> (band to the KEY line), well insulated &mdash; the white wire carries +13 V</td></tr>
 <tr><td>11</td><td>A7</td><td>blue</td><td>S3 network</td><td>network &rarr; <b>orange</b> to CAL (1N4148 + 47 k), <b>white/black</b> to +CW (1N4148 + 22 k), 10 k to GND</td></tr>
 <tr class="grp"><td colspan="5">Output / supply</td></tr>
 <tr><td>12</td><td>D13</td><td>white/red</td><td>VariBeam Nano D8 (through 10 k)</td><td>PTT request from CAT. VariBeam keys only after 300 ms HIGH (bootloader blinks ignored), drives D9 &rarr; BC547 &rarr; PTT relay (wiring sheet section 10)</td></tr>
 <tr class="grp"><td colspan="5">RF</td></tr>
-<tr><td>13</td><td>Si5351 CLK2</td><td>thin coax</td><td>old PC-820 cal injection point</td><td>leave the receiver end open for now; later 1&ndash;2 pF or 47 k in series</td></tr>
+<tr><td>13</td><td>Si5351 CLK2</td><td>thin coax</td><td>shielded CAL box &rarr; ATT/PRE J1</td><td>PC-820 removed. Box: 1 k, 2 &times; 10 &Omega;, 4.7 k, AUTO CAL tap header (wiring sheet section 9)</td></tr>
 </table>
 <ul>
-<li>Not from the VFO box: J4 pins 5&ndash;8 (audio via transformers, PTT to the KEY line) and the rocker / relay +12 V wiring.</li>
+<li>Not from the VFO box: J4 pins 5&ndash;8 (audio via transformers, PTT to the KEY line), the rocker / relay +12 V wiring, the BD140 + 78L08 preamp supply and the AGC pole 1 base wire.</li>
 <li>Route along the chassis, cross coax at 90&deg;. If a reading jumps on TX: 100 nF from that pin to GND at the Nano.</li>
 </ul>
 </div></body></html>'''
