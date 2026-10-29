@@ -78,17 +78,17 @@
         <li>Power cycle only with the POW LED fully out (TTL back-feeds the Nano). Never USB and TTL at the same time.</li>
       </ul>
 
-      <h2>Free Nano pins &amp; plan <span class="tag">proposal</span></h2>
+      <h2>Nano pin use <span class="tag">2026-10-28</span></h2>
       <table>
-        <tr><th>Pin</th><th>Now</th><th>Plan</th></tr>
-        <tr><td>D0 / D1</td><td>Serial</td><td>TTL / J4 serial</td></tr>
-        <tr><td>D4</td><td>free</td><td>AGC fast switch sense</td></tr>
-        <tr><td>D5</td><td>free</td><td>ATT relay sense</td></tr>
-        <tr><td>D6</td><td>STEP button</td><td>PRE relay sense (STEP &rarr; A6)</td></tr>
-        <tr><td>D13</td><td>PTT request</td><td>&rarr; 10 k &rarr; VariBeam Nano D8 (300 ms filter: bootloader blinks ignored)</td></tr>
-        <tr><td>A6</td><td>free (analog)</td><td>STEP, MENU + MODE rocker</td></tr>
-        <tr><td>A7</td><td>free (analog)</td><td>S3 position: CW / CAL sense</td></tr>
-              </table>
+        <tr><th>Pin</th><th>Use</th></tr>
+        <tr><td>D0 / D1</td><td>Serial: CAT / debug / upload (J4)</td></tr>
+        <tr><td>D4</td><td>AGC rocker sense (LOW = fast)</td></tr>
+        <tr><td>D5</td><td>ATT sense; AUTO CAL CLK2 count (T1)</td></tr>
+        <tr><td>D6</td><td>PRE sense; AUTO CAL 1PPS</td></tr>
+        <tr><td>D13</td><td>CAT PTT &rarr; 10 k &rarr; VariBeam Nano D8</td></tr>
+        <tr><td>A6</td><td>STEP, MENU + MODE rocker</td></tr>
+        <tr><td>A7</td><td>S3 position: CW / CAL</td></tr>
+      </table>
       <div class="note">Used: D2/D3 encoder, D7&ndash;D12 LCD, A0/A1 S-meter, A3 band, A4/A5 I&sup2;C Si5351. <b>A2 TX</b> (LOW = TX): KEY line &rarr; 1N4148 (band to key line) &rarr; A2.<br><b>Sense inputs:</b> GND-side switch + 1N4148, or 22 k / 10 k from +12 V. Parts at the <b>source end</b> (wires to the Nano carry &le; 5 V). Never raw +13 V on a pin.</div>
     </div>
   </div>
@@ -225,10 +225,28 @@
         <li><b>Preamp supply:</b> +12 V &rarr; BD140 (10 k E&ndash;B, B &rarr; 4.7 k &rarr; K2 coil low end, back = C insulated) &rarr; 78L08 &rarr; J3 +. Q1 runs only in PRE, at 8 V / 22 mA.</li>
       </ul>
 
-      <h2>5. AGC fast/slow &mdash; DPDT rocker, sense D4 <span class="tag">proposal</span></h2>
+      <h2>5. AGC fast/slow &mdash; DPDT rocker, BC547 on PC-300D <span class="tag">to build</span></h2>
+      <svg viewBox="0 0 330 104" aria-label="AGC hold capacitor C311 switched by a BC547">
+        <text x="2" y="12">from L301</text>
+        <line class="w" x1="2" y1="18" x2="60" y2="18"/><circle class="f" cx="40" cy="18" r="2"/>
+        <text x="2" y="34">Q301B in</text>
+        <polyline class="w" points="60,18 63,13 69,23 75,13 81,23 84,18"/><text x="58" y="9">R311 1 k</text>
+        <line class="w" x1="84" y1="18" x2="230" y2="18"/><circle class="f" cx="110" cy="18" r="2"/>
+        <polyline class="w" points="40,18 40,40 66,40"/><line class="w" x1="66" y1="34" x2="66" y2="46"/><line class="w" x1="70" y1="34" x2="70" y2="46"/><polyline class="w" points="70,40 110,40 110,18"/>
+        <text x="52" y="56">C310 2.2 &micro;</text>
+        <line class="w" x1="140" y1="18" x2="140" y2="34"/><line class="w" x1="132" y1="34" x2="148" y2="34"/><line class="w" x1="132" y1="38" x2="148" y2="38"/><line class="w" x1="140" y1="38" x2="140" y2="48"/><line class="w" x1="134" y1="48" x2="146" y2="48"/>
+        <text x="150" y="38">C fast 2.2 &micro; (new)</text>
+        <line class="w" x1="230" y1="18" x2="230" y2="30"/><line class="w" x1="222" y1="30" x2="238" y2="30"/><line class="w" x1="222" y1="34" x2="238" y2="34"/>
+        <text x="242" y="30">C311 22 &micro;</text>
+        <line class="w" x1="230" y1="34" x2="230" y2="56"/>
+        <circle class="w" cx="230" cy="66" r="10"/><text x="244" y="66">BC547 (new)</text><text x="244" y="76">C up, E to GND</text>
+        <line class="w" x1="230" y1="76" x2="230" y2="90"/><line class="w" x1="222" y1="90" x2="238" y2="90"/>
+        <line class="w" x1="170" y1="66" x2="220" y2="66"/><circle class="f" cx="196" cy="66" r="2"/>
+        <line class="w" x1="196" y1="66" x2="196" y2="74"/><polyline class="w" points="196,74 191,77 201,81 191,85 201,89 196,92"/><text x="150" y="100">10 k to +13 V (pin 2)</text>
+        <text x="62" y="70">rocker pole 1 FAST = GND</text>
+      </svg>
       <ul>
-        <li>2N7000 at PC-300D: gate 100 &Omega; from the rocker (+12 V), 100 k gate&ndash;GND, drain via R<sub>fast</sub> (~150&ndash;330 k) to the AGC hold node.</li>
-                <li>Sense: <b>DPDT rocker</b> &mdash; 2nd pole common to GND, &ldquo;fast&rdquo; throw to D4 (INPUT_PULLUP, LOW = fast). No divider.</li>
+        <li>C311 (22 &micro;F) &minus; leg lifted from GND &rarr; BC547 C; E to the old C311 &minus; pad. Base: 10 k from +13 V (PC-300D pin 2), wire to rocker pole 1 (common GND, FAST throw on the D4 side). SLOW = stock; FAST: only C fast holds (&asymp; 11&times; faster), S-meter calibration unchanged. Pumping &rarr; 4.7 &micro;F. Pole 2 &rarr; D4 sense (wired).</li>
       </ul>
 
     </div>
