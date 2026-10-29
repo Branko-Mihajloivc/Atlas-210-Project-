@@ -2,6 +2,28 @@
 
 Test gear: FTdx10 as frequency reference, tinySA + step attenuator as signal source.
 
+## Current state (2026-10-29)
+The sections below this one are the earlier summaries, kept as written; the dated log further down
+is the detailed history.
+
+Done and tested:
+- VFO Nano: Si5351 LO / BFO, CW, MODE OPP, S-meter (dBm in CAL), menu with exit without saving,
+  CAT (TS-480 subset, 19200 baud with MSHV), CLK2 marker (fixed points, MENU shortcut in CAL).
+- VariBeam Nano: SSD1306 OLED, presets SSB / NARROW / CW, CAT PTT (300 ms filter, 3 min timeout).
+- J4 data interface: TTL serial, audio transformers, PTT relay (no PTT switch fitted).
+- ATT / PRE board: ATT -17.5 dB, PRE +7.5 dB (78L08 + BD140, powered only in PRE).
+- CAL attenuator box at the ATT / PRE input (leak ~S9, marker -43 dBm at the peak on 20 m).
+- AGC fast / slow (BC547 switches C311 on PC-300D).
+- PA maintenance and bias (idle ~1.09 A on TX).
+
+Open:
+- AUTO CAL test (D5 plain wire from the CAL box header, D6 1PPS cable with 1 k, GPSDO).
+- AGC FAST on air (pumping? slower tail near idle).
+- Mic gain (more gain / compressor) - only if needed.
+- CW: check the carrier = dial ± 800 Hz off-air; semi-break-in (idea, VariBeam Nano).
+- 10 m low power (LO level check) - at the very end.
+- Diagrams to bring up to date: system wiring, controls wiring, preamp schematic.
+
 ## VFO Nano (Si5351)
 - Sketch `firmware/atlas_vfo_fixed`, board "ATmega328P (Old Bootloader)".
 - I²C timeout (freeze fix), encoder ISR only counts steps, band switch hysteresis, EEPROM restore,
@@ -26,7 +48,7 @@ Test gear: FTdx10 as frequency reference, tinySA + step attenuator as signal sou
 - Sensitivity: signal heard at −115 dBm.
 - Antenna jack → GND 1–2 Ω on all bands (band switch, LPF and antenna relay OK).
 - DC switching relay RL101 (PC-100) was dirty → cleaned. Big gain improvement.
-- Old dipped tantalums replaced on PC-200 and PC-300D (C311 47 µF AGC hold → electrolytic).
+- Old dipped tantalums replaced on PC-200 and PC-300D (C311 AGC hold → 22 µF electrolytic).
 - PC-200-D (built as the C design: R220 100 Ω + D207 1N4148, no R203 pot). R222 (S-meter zero)
   → 1 k multi-turn.
 - PC-300D: R309 (AGC threshold) → 5 k multi-turn. Factory procedure: no signal → R222 for zero,
@@ -36,9 +58,9 @@ Test gear: FTdx10 as frequency reference, tinySA + step attenuator as signal sou
 - PC-300D part numbers and values differ from the PC-300C schematic — identify parts by value and
   position. The Atlas AGC bulletin mod was not applied for that reason.
 - AGC release is slow (S-meter falls back over several seconds) — this is the PC-300D hold time,
-  not the Nano.
+  not the Nano. Since 2026-10-29 the AGC rocker has a FAST position (see the log).
 - The VariBeam DSP adds ~25 dB of audio; it is wired after the AGC pickoff: PC-300 pin 22 → VariBeam → AF gain → pin 12.
-- AF/RF gain and MIC/ALC are now two concentric dual pots (values to confirm, see the wiring sheet).
+- AF/RF gain and MIC/ALC are now two concentric dual pots (compensation fitted, wiring sheet section 7).
 - 20 m weaker: the chassis-mounted 20 m image filter had a loose paper coil form turning with the
   slug → glue the form, tune for minimum image. 4–6 dB less on 20 m is normal for the Atlas.
 - PC-100: loose R101 trimmer (carrier balance, 100 Ω) with hand effect → replace, check TX carrier
@@ -52,11 +74,10 @@ Test gear: FTdx10 as frequency reference, tinySA + step attenuator as signal sou
 - Fixes: 2 ms per emulated encoder state (the VariBeam missed steps), counted detents, OLED reset
   pin clashed with the encoder switch, SH1106 column offset 0.
 - Splash screen + resync at power on, CF/BW/mode in EEPROM, passband edges + trapezoid graph.
-- Button: 1× CF/BW, 2× preset (SSB 1500/2400, SSB NARROW 1400/1800, CW 700/500, DIGI 1500/3000),
-  3× screen when idle (OFF / DIM / ALWAYS ON), hold 2 s = resync.
+- Button: 1× CF/BW, 2× preset (SSB 1500/2400, SSB NARROW 1400/1800, CW 700/500; DIGI removed
+  2026-10-26), 3× screen when idle (OFF / DIM / ALWAYS ON), hold 2 s = resync.
 - After uploading, power cycle the radio so the VariBeam and the Nano start in sync.
-- The display is being changed to a 0.96" SSD1306 → the sketch needs the SSD1306 library
-  instead of SH110X.
+- Display: 0.96" SSD1306 (Adafruit SSD1306 library). CAT PTT on D8 → D9 (2026-10-28).
 
 ## Front plate (3D print)
 - `3d/Atlas 210 - final.stl`, 239 × 88 × 9 mm (`Atlas 210 - original.stl` for comparison).
@@ -66,7 +87,7 @@ Test gear: FTdx10 as frequency reference, tinySA + step attenuator as signal sou
   frame with 2 mm walls.
 - 16×2 LCD (RG1602A): pocket as designed (PCB flush with the top edge), window 65 × 15.
 
-## Planned
+## Planned (as of 2026-10-18; current state at the top)
 - TX test into a dummy load: A0/A1 voltages and I²C timeouts on TX, carrier suppression.
 - Re-check birdies with the corrected frequency calibration.
 - Low-pass filters on Si5351 CLK0 and CLK1 against spurs.
@@ -90,15 +111,16 @@ Test gear: FTdx10 as frequency reference, tinySA + step attenuator as signal sou
 - Low SSB modulation reported (only OK at max mic gain): first fit the 11 k across the ALC pot, then check
   the mic type (needs a high-impedance mic) and the mic amp voltages on TX.
 
-## Next (Nano session)
-1. CW: A7 sense + BFO/LO shift in the sketch, then CW test into a dummy load.
+## Next (Nano session, 2026-10-19)
+1. (done 2026-10-23) CW: A7 sense + BFO/LO shift in the sketch, then CW test into a dummy load.
 2. LCD layout: glyph test, then the new layout (see docs/lcd_mockup.html).
 3. Noise test after the LCD rewiring (antenna off, tune, hand-over-cable test).
 4. Fit the pot compensation resistors, re-check modulation on air.
 5. (done 2026-10) VariBeam sketch switched to SSD1306, new OLED working.
 6. RX preamp idea: compare band noise antenna vs dummy load first.
 
-## Ideas list (agreed 2026-10-20, not started)
+## Ideas list (agreed 2026-10-20; done since: tuning acceleration, CAT + PTT, CLK2 calibrator /
+## AUTO CAL, TX timeout on the VariBeam, data-mode interface on J4, AGC fast / slow, PA check)
 Software (VFO Nano):
 - VFO A/B + split (control scheme to decide).
 - Tuning acceleration (10 Hz base step, bigger steps when turning fast).
@@ -195,8 +217,8 @@ KEY line current measured 2.1 mA -> CAT PTT with any small NPN (BC547): D13 -> 4
 Wired 2026-10-22: A6 green (10 k pull-up at Nano), A7 blue -> network (orange CAL, white/black +CW), A2 white (diode at Nano end), D4 orange, D5 grey, D6 red, D13 white/red, CLK2 coax. Buttons GND twisted with the green A6 wire; no +5 V wire.
 Front controls decided 2026-10-23: STEP button (0 ohm), MENU button (4.7 k), MODE latching rocker NORM/OPP (22 k) all on A6 + GND; ATT/NORM/PRE and AGC rockers; 3 ATU buttons.
 WIRING STATE 2026-10-23: VFO Nano side done (J4 4-wire set, A6+GND twisted, A7 blue, A2 white with diode at Nano, D4 orange, D5 grey, D6 red, D13 white/red, CLK2 coax). J4 now connected to the USB adapter (CAT / rear programming). Still to do at the far ends: buttons + MODE rocker, ATT/PRE relays + sense, AGC, A7 network, KEY line point (A2, D13 NPN, J4 pin 8 PTT), J4 audio, CLK2 injection. Next: first upload through J4.
-J4 RST cap: 10 nF did NOT reset the Nano (its own 100 nF RST-to-CH340 cap forms a divider, only ~0.5 V dip). Changed to 1 uF (105). Serial via J4 confirmed working (status lines read on COM20, white = pin 2).
-UPLOADED 2026-10-23 via J4 (COM20) with the power-switch method (radio off 10 s, on while arduino-cli retries): spur fix + MBL600 decoder + CW shift (CW_SENSE_FITTED 0). Serial confirms loDiv=98 on 20 m. To test: RX normal on all bands, dial accuracy, encoder reversal, 20 m birdie re-check.
+J4 RST cap: 10 nF did NOT reset the Nano (its own 100 nF RST-to-CH340 cap forms a divider, only ~0.5 V dip). Changed to 1 uF (105). Serial via J4 confirmed working (status lines read on the PC, white = pin 2).
+UPLOADED 2026-10-23 via J4 with the power-switch method (radio off 10 s, on while arduino-cli retries): spur fix + MBL600 decoder + CW shift (CW_SENSE_FITTED 0). Serial confirms loDiv=98 on 20 m. To test: RX normal on all bands, dial accuracy, encoder reversal, 20 m birdie re-check.
 Uploaded 2026-10-23 (e951f81): divider choice away from PLL spur points + fewer I2C writes. Serial: 14.0955 loDiv=82 score=313, bfoDiv=118. Earlier run (d=98): encoder reversal fixed, but tuning noise new and birdies 14.194/14.1945 S9, 14.106 S8 (new), 14.051 S8, 14.196 garble S7; 14.198 gone. Re-test pending.
 Uploaded 12ce740: serial quiet unless asked ("?" = one status line, "D" = stream on/off). Verified: 0 bytes unasked, "?" answers. Ticking on 21/28 MHz was the 2/s status line running out through J4 + USB cable. Later: 470 ohm-1 k series in J4 TX/RX at the Nano end; CAT polling slow or auto-information mode.
 Remaining 20 m birdies (14.051, 14.106, 14.1955; antenna off, barely audible with antenna): PARKED. Not Si5351 PLL fractional, not VariBeam (Nano + DSP off). Suspects: VFO Nano 16 MHz, its CH340 12 MHz, Si5351 25 MHz xtal, LCD oscillator. Find with tinySA + loop probe (after repair). Possible fixes: lift CH340 supply pin (J4 programming makes it unnecessary), tin shield over Si5351 / Nano, RC/ferrite on wires, 27 MHz crystal or 27 MHz Si5351 module (sketch: init with 27000000).
