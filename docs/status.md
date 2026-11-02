@@ -17,6 +17,10 @@ Done and tested:
 - PA maintenance and bias (idle ~1.09 A on TX).
 
 Open:
+- PTT / data audio board (`docs/ptt_board`, replaces the failed relay, fitted at the old PC-600 position): built and wired,
+  Finder relay still to fit, mic through a jumper until then. Then test CAT PTT into a dummy load.
+- Watch: intermittent "wind" noise on RX, inside the radio (antenna off, RF gain down, went away by itself).
+- Watch: VariBeam out of step with its OLED value after BW changes; hold 2 s to resync fixes it.
 - AUTO CAL test (D5 plain wire from the CAL box header, D6 1PPS cable with 1 k, GPSDO).
 - AGC FAST on air (pumping? slower tail near idle).
 - Mic gain (more gain / compressor) - only if needed.
