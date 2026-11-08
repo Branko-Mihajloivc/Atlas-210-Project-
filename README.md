@@ -28,7 +28,7 @@ project: replace the VFO with an Si5351, then improve whatever else could be mad
 | [`3d`](3d) | Front plate STL (original and corrected) + Python scripts used to measure and fix it |
 | [`docs`](docs) | Build notes and measurements (`status.md`), wiring sheet, system and controls wiring, ATT / PRE board (schematic, PCB plan, assembly drawing), PTT / data audio board. Each as PDF + HTML, `*_dark.pdf` for the screen; `build_pdfs.py` rebuilds them. LCD layout mockup (`lcd_mockup.html`) |
 | [`tools`](tools) | PowerShell helpers: upload when avrdude fails, serial reader, bootloader check, flash backup; 2023 firmware backup |
-| [`photos`](photos) | Build photos |
+| [`photos`](photos) | Build photos (2026 ones in `photos/2026`) |
 
 ## VFO Nano (`atlas_vfo_fixed.ino`)
 
@@ -113,6 +113,18 @@ first design for comparison). Corrected from the original design:
   [`attpre_assembly.pdf`](docs/attpre_assembly.pdf) — the ATT / PRE board.
 - [`docs/ptt_board.pdf`](docs/ptt_board.pdf) — the PTT / data audio board: parts and tracks, wiring list,
   1:1 etching artwork (page 3 = one transfer only).
+
+## Build photos (2026)
+
+Click a photo for full size. Older build photos are in [`photos`](photos).
+
+<table>
+<tr><td width="50%"><a href="photos/2026/01_finished_front.jpg"><img src="photos/2026/01_finished_front.jpg" width="100%"></a><br>Finished radio: new front panel with LCD, rockers, VariBeam OLED and the original dial</td><td width="50%"><a href="photos/2026/02_pa_before_1.jpg"><img src="photos/2026/02_pa_before_1.jpg" width="100%"></a><br>PA (PC-500D) before the rework</td></tr>
+<tr><td width="50%"><a href="photos/2026/03_pa_before_2.jpg"><img src="photos/2026/03_pa_before_2.jpg" width="100%"></a><br>PA before the rework, driver side</td><td width="50%"><a href="photos/2026/04_pa_after.jpg"><img src="photos/2026/04_pa_after.jpg" width="100%"></a><br>PA after: cleaned, new thermal paste, bias resistors refitted, bias diode replaced</td></tr>
+<tr><td width="50%"><a href="photos/2026/05_attpre_board_1.jpg"><img src="photos/2026/05_attpre_board_1.jpg" width="100%"></a><br>ATT / PRE board fitted at the RX input</td><td width="50%"><a href="photos/2026/06_attpre_board_2.jpg"><img src="photos/2026/06_attpre_board_2.jpg" width="100%"></a><br>ATT / PRE board next to the VariBeam Nano and DSP filter</td></tr>
+<tr><td width="50%"><a href="photos/2026/07_attpre_board_3.jpg"><img src="photos/2026/07_attpre_board_3.jpg" width="100%"></a><br>ATT / PRE board close-up (Finder relays on the far side)</td><td width="50%"><a href="photos/2026/08_radio_without_pa.jpg"><img src="photos/2026/08_radio_without_pa.jpg" width="100%"></a><br>Rear of the chassis with the PA removed: low pass filters and band switch</td></tr>
+<tr><td width="50%"><a href="photos/2026/09_ptt_board_tracks.jpg"><img src="photos/2026/09_ptt_board_tracks.jpg" width="100%"></a><br>PTT / data audio board, track side (single-sided, GND jumpers)</td><td width="50%"><a href="photos/2026/10_ptt_board_parts.jpg"><img src="photos/2026/10_ptt_board_parts.jpg" width="100%"></a><br>PTT / data audio board, parts side, before the relay</td></tr>
+</table>
 
 ## References (not included here)
 
