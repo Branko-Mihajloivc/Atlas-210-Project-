@@ -409,6 +409,7 @@
         <li>Out from PC-300 pin 22: after the AGC, before AF gain and VariBeam &rarr; level independent of the volume knob.</li>
         <li>Pole 2 selects the PC-200 pin 17 (mic input) source: <b>COM</b> = PC-200 pin 17, <b>NC</b> = mic (from the mic socket), <b>NO</b> = PC audio (47 k / 470 &Omega; = line to mic level). RX / mic PTT: mic only; CAT TX: PC audio only. MIC gain sets both levels. Shields joined past the relay, unshielded ends &le; 2 cm.</li>
         <li>DPDT relay (e.g. Finder 30.22, 16 mA) + flyback diode: PC PTT keys the radio <b>and</b> opens the mic line. Mic PTT unchanged.</li>
+        <li><b>Now on the PTT / data audio board</b> (ptt_board.pdf) at the old PC-600 position: relay, BC547, D1 and both transformers. The first relay failed with its KEY pole stuck; same circuit.</li>
         <li><b>PTT relay board wires:</b> <b>yellow</b> = VariBeam D9, <b>red</b> = +12 V, <b>grey</b> = GND, <b>white</b> = PTT to the KEY line.</li>
         <li><b>Driver:</b> VariBeam D9 &rarr; 4.7 k &rarr; BC547 base, 47 k base&ndash;GND, emitter GND, collector &rarr; coil low end. Coil 12 V DPDT, 930 &Omega; (&asymp; 13 mA); 1N4148 across the coil, <b>band to +12 V</b>.</li>
         <li><b>No PTT switch</b> (not fitted, not needed): CAT OFF in the VFO menu or S3 in CAL blocks CAT TX, the VariBeam drops the PTT after 3 min, and the 300 ms filter ignores the bootloader blinks.</li>

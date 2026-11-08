@@ -26,7 +26,7 @@ project: replace the VFO with an Si5351, then improve whatever else could be mad
 | [`firmware/VB_LocalDisplay_fixed`](firmware/VB_LocalDisplay_fixed) | VariBeam DSP control Nano sketch (current) |
 | [`firmware/original_2023`](firmware/original_2023) | The 2023 versions, for reference |
 | [`3d`](3d) | Front plate STL (original and corrected) + Python scripts used to measure and fix it |
-| [`docs`](docs) | Build notes and measurements (`status.md`), wiring sheet, system and controls wiring, ATT / PRE board (schematic, PCB plan, assembly drawing). Each as PDF + HTML, `*_dark.pdf` for the screen; `build_pdfs.py` rebuilds them. LCD layout mockup (`lcd_mockup.html`) |
+| [`docs`](docs) | Build notes and measurements (`status.md`), wiring sheet, system and controls wiring, ATT / PRE board (schematic, PCB plan, assembly drawing), PTT / data audio board. Each as PDF + HTML, `*_dark.pdf` for the screen; `build_pdfs.py` rebuilds them. LCD layout mockup (`lcd_mockup.html`) |
 | [`tools`](tools) | PowerShell helpers: upload when avrdude fails, serial reader, bootloader check, flash backup; 2023 firmware backup |
 | [`photos`](photos) | Build photos |
 
@@ -87,6 +87,8 @@ See [`docs/status.md`](docs/status.md) for all measurements. Highlights:
   2.2 µF (about 11× faster release), the S-meter calibration is unchanged.
 - **Data interface on J4** (old EXT OSC socket): TTL serial (CAT and uploads), RX / TX audio through
   600:600 transformers, PTT relay that keys the radio and switches the mic input to PC audio.
+  The original relay failed (contacts stuck); a small home-etched board at the old PC-600 position now
+  carries the relay, BC547 driver and both transformers (Finder relay still to fit).
 - **PA (PC-500D):** cleaned, new thermal paste, the lifted bias resistors refitted, bias diode
   replaced; idle ~1.09 A on TX. 80–15 m 75–100 W; 10 m low (~40 W), to be checked.
 - Front panel gain pots replaced (AF / RF, MIC / ALC as concentric pairs) with value compensation.
@@ -109,6 +111,8 @@ first design for comparison). Corrected from the original design:
 - [`docs/controls_wiring.pdf`](docs/controls_wiring.pdf) — buttons, rockers, relays and sense wires.
 - [`docs/preamp_bfg135.pdf`](docs/preamp_bfg135.pdf), [`attpre_pcb.pdf`](docs/attpre_pcb.pdf),
   [`attpre_assembly.pdf`](docs/attpre_assembly.pdf) — the ATT / PRE board.
+- [`docs/ptt_board.pdf`](docs/ptt_board.pdf) — the PTT / data audio board: parts and tracks, wiring list,
+  1:1 etching artwork (page 3 = one transfer only).
 
 ## References (not included here)
 
