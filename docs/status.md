@@ -17,8 +17,9 @@ Done and tested:
 - PA maintenance and bias (idle ~1.09 A on TX).
 
 Open:
-- PTT / data audio board (`docs/ptt_board`, replaces the failed relay, fitted at the old PC-600 position): built and wired,
-  Finder relay still to fit, mic through a jumper until then. Then test CAT PTT into a dummy load.
+- PTT / data audio board (`docs/ptt_board`, replaces the failed relay, fitted at the old PC-600 position): done.
+  Finder relay fitted; CAT PTT keys and releases, mic SSB OK. BC547 sits on the track side (first fitted back to front,
+  which kept the relay pulled in). Still to do: taller stand-offs so the J4-side wires clear the speaker.
 - Watch: intermittent "wind" noise on RX, inside the radio (antenna off, RF gain down, went away by itself).
 - Watch: VariBeam out of step with its OLED value after BW changes; hold 2 s to resync fixes it.
 - AUTO CAL test (D5 plain wire from the CAL box header, D6 1PPS cable with 1 k, GPSDO).

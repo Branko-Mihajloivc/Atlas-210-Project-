@@ -88,7 +88,7 @@ See [`docs/status.md`](docs/status.md) for all measurements. Highlights:
 - **Data interface on J4** (old EXT OSC socket): TTL serial (CAT and uploads), RX / TX audio through
   600:600 transformers, PTT relay that keys the radio and switches the mic input to PC audio.
   The original relay failed (contacts stuck); a small home-etched board at the old PC-600 position now
-  carries the relay, BC547 driver and both transformers (Finder relay still to fit).
+  carries the relay (Finder 30.22), BC547 driver and both transformers.
 - **PA (PC-500D):** cleaned, new thermal paste, the lifted bias resistors refitted, bias diode
   replaced; idle ~1.09 A on TX. 80–15 m 75–100 W; 10 m low (~40 W), to be checked.
 - Front panel gain pots replaced (AF / RF, MIC / ALC as concentric pairs) with value compensation.

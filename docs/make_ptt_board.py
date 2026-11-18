@@ -256,7 +256,7 @@ th { background: #eee; }
 <li><b>Green rings = GND</b>, joined by insulated wires on the parts side and short jumpers underneath: GND pad next to KEY, 47 k and BC547 emitter; last GND pad, T1 and relay NO; GND pad next to RX, T2 and 470 &Omega;. Check with the meter that all GND points are joined.</li>
 <li><b>LINK</b> (blue) = one insulated wire on the parts side, around the relay's coil end, taking KEY across the other tracks.</li>
 <li>Relay: coil end on the left. Upper row = KEY pole, lower row = audio pole. D1 band at the top (12 V).</li>
-<li>BC547, pins in a column: E top, B middle, C bottom, flat side towards the left edge. Check E-B-C on your part. Check each transformer pair with the meter: each side must be one winding.</li>
+<li>BC547, pins in a column: E top, B middle, C bottom. On the parts side the flat side faces the relay; if fitted on the track side it faces the left edge instead. Fitted the wrong way round, the relay pulls in with no PTT. Check C-B-E on your part. Check each transformer pair with the meter: each side must be one winding.</li>
 </ul>
 <table><tr><th>Pad</th><th>Goes to</th><th>On the board</th></tr>''' + table + '''</table>
 </div>
